@@ -1,0 +1,33 @@
+[project]
+name = "recon-lsp"
+version = "0.1.0"
+description = "LSP-powered code reconnaissance CLI — semantic code intelligence for AI agents and humans."
+readme = "README.md"
+authors = [
+    { name = "atharvsp189", email = "atharvsp189@gmail.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "multilspy>=0.0.15",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "toml>=0.10.2",
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+recon = "recon.main:app"
+
+[build-system]
+requires = ["uv_build>=0.11.25,<0.12.0"]
+build-backend = "uv_build"
