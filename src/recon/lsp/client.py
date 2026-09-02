@@ -166,21 +166,46 @@ def wait_for_daemon_socket() -> bool:
     while time.monotonic() < deadline:
         try:
             conn = connect_to_daemon()
+            send_frame(conn, {"cmd": "ping"})
+            resp = recv_frame(conn)
             conn.close()
-            return True
+            if resp.get("result") == "pong":
+                return True
         except (ConnectionRefusedError, FileNotFoundError, OSError):
             time.sleep(SOCKET_POLL_INTERVAL)
     return False
 
 
+def get_daemon_python_executable() -> str:
+    """Resolve the Python executable within the current environment/venv."""
+    if sys.platform == "win32":
+        venv_python = Path(sys.prefix) / "Scripts" / "python.exe"
+    else:
+        venv_python = Path(sys.prefix) / "bin" / "python"
+
+    if venv_python.exists():
+        return str(venv_python)
+    return sys.executable
+
+
 def spawn_daemon() -> None:
     """Launch the recon daemon as a detached background process."""
+    kwargs = {}
+    if sys.platform == "win32":
+        # DETACHED_PROCESS (0x00000008) + CREATE_NEW_PROCESS_GROUP (0x00000200)
+        kwargs["creationflags"] = 0x00000008 | 0x00000200
+        kwargs["start_new_session"] = False
+    else:
+        kwargs["start_new_session"] = True
+
+    python_exe = get_daemon_python_executable()
+
     subprocess.Popen(
-        [sys.executable, "-m", "recon.daemon"],
-        start_new_session=True,
+        [python_exe, "-m", "recon.daemon"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         close_fds=True,
+        **kwargs
     )
 
 

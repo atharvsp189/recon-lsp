@@ -62,6 +62,23 @@ def resolve_column(
 
 
 # ---------------------------------------------------------------------------
+# Cross-platform URI parsing
+# ---------------------------------------------------------------------------
+
+def uri_to_path(uri: str) -> str:
+    """Convert an LSP file:// URI to a cross-platform local path."""
+    import urllib.parse
+    import os
+    from urllib.request import url2pathname
+    parsed_path = urllib.parse.urlparse(uri).path
+    raw_path = url2pathname(parsed_path)
+    try:
+        return os.path.relpath(raw_path)
+    except ValueError:
+        return raw_path
+
+
+# ---------------------------------------------------------------------------
 # Context fetching — adds surrounding source lines to LSP locations
 # ---------------------------------------------------------------------------
 
@@ -69,9 +86,13 @@ def add_context_to_locations(locations: List[dict], context_lines: int) -> List[
     """Enrich LSP location results with surrounding source code lines."""
     if context_lines <= 0:
         return locations
+
     for item in locations:
         loc = item.get("location", item)
         abs_path = loc.get("absolutePath")
+        if not abs_path and "uri" in loc:
+            abs_path = uri_to_path(loc["uri"])
+
         rng = loc.get("range")
         if abs_path and rng:
             try:

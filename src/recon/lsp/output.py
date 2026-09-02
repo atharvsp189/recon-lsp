@@ -33,13 +33,8 @@ def print_human(data: Any) -> None:
                 loc = item.get("location", item)
                 path = loc.get("relativePath") or loc.get("absolutePath")
                 if not path and "uri" in loc:
-                    import urllib.parse
-                    import os
-                    raw_path = urllib.parse.unquote(urllib.parse.urlparse(loc["uri"]).path)
-                    try:
-                        path = os.path.relpath(raw_path)
-                    except ValueError:
-                        path = raw_path
+                    from recon.utils import uri_to_path
+                    path = uri_to_path(loc["uri"])
                 path = path or "unknown"
                 
                 # Format line number as 1-indexed for display
