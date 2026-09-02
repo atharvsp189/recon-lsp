@@ -46,18 +46,17 @@ def info(
     info_text = (
         f"[bold]Version:[/bold]        {__version__}\n"
         f"[bold]Language:[/bold]       {cfg.language or '[dim]not set[/dim]'}\n"
-        f"[bold]Repo Path:[/bold]     {cfg.repo_path or '[dim]not set[/dim]'}\n"
         f"[bold]Daemon:[/bold]         {daemon_running}\n"
         f"\n"
-        f"[bold]Project Config:[/bold] {project_config} ({project_status})\n"
-        f"[bold]Global Config:[/bold]  {global_config} ({global_status})\n"
-        f"[bold]Daemon Dir:[/bold]     {get_daemon_dir()}\n"
-        f"[bold]Daemon Log:[/bold]     {get_log_file()}\n"
+        f"[bold]Config Status:[/bold]\n"
+        f"  Project: {project_status}\n"
+        f"  Global:  {global_status}\n"
         f"\n"
-        f"[bold]Output Format:[/bold]  {cfg.default_format}\n"
-        f"[bold]Context Lines:[/bold]  {cfg.context_lines}\n"
-        f"[bold]Idle Timeout:[/bold]   {cfg.idle_timeout}s\n"
-        f"[bold]Request Timeout:[/bold] {cfg.request_timeout}s"
+        f"[bold]Settings:[/bold]\n"
+        f"  Output Format: {cfg.default_format}\n"
+        f"  Context Lines: {cfg.context_lines}\n"
+        f"  Idle Timeout:  {cfg.idle_timeout}s\n"
+        f"  Request Timeout: {cfg.request_timeout}s"
     )
 
     console.print(Panel(

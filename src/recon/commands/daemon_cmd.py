@@ -39,8 +39,7 @@ def start():
     if wait_for_daemon_socket():
         print_success("Daemon started successfully.")
     else:
-        print_error("Daemon did not become ready in time.")
-        console.print(f"  [dim]Check log: {get_log_file()}[/dim]")
+        print_error("Daemon did not become ready in time. Check daemon log.")
         raise typer.Exit(code=1)
 
 
@@ -95,7 +94,7 @@ def status():
                 title="Daemon Status",
                 border_style="green",
             ))
-        console.print(f"\n  [dim]Log: {get_log_file()}[/dim]")
+        # Removed log output to keep it minimal
     except Exception:
         print_error("Daemon is running but unreachable.")
 

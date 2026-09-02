@@ -104,6 +104,7 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
         "install_cmd": None,
         "manual_guide": "Ubuntu/Debian: sudo apt install clangd\n"
                         "macOS: brew install llvm\n"
+                        "Windows: winget install LLVM.LLVM\n"
                         "Arch: sudo pacman -S clang\n"
                         "Fedora: sudo dnf install clang-tools-extra",
         "binary_names": ["clangd"],
@@ -363,7 +364,7 @@ def setup(
         f"[bold cyan]Language Server:[/bold cyan] [green]{server_name}[/green]\n"
         f"[bold cyan]Prerequisites:[/bold cyan]   {', '.join(found_prereqs) if found_prereqs else 'none'} "
         f"{'([red]missing: ' + ', '.join(missing_prereqs) + '[/red])' if missing_prereqs else '[green]✓ all met[/green]'}\n"
-        f"[bold cyan]Binary Status:[/bold cyan]   {'[green]✓ Found (' + str(bin_location) + ')[/green]' if has_bin else '[yellow]Not detected in PATH[/yellow]'}\n"
+        f"[bold cyan]Binary Status:[/bold cyan]   {'[green]✓ Found[/green]' if has_bin else '[yellow]Not detected in PATH[/yellow]'}\n"
         f"[bold cyan]Auto-Download:[/bold cyan]   {'[green]Yes (via multilspy)[/green]' if meta.get('auto_download') else 'No (requires package manager)'}",
         title=f"🔍 Language Server Diagnostics: {language.upper()}",
         border_style="cyan",

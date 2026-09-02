@@ -113,7 +113,7 @@ def config(
     else:
         path = save_project_config(cfg, repo_path)
 
-    print_success(f"Config saved to {path}")
+    print_success(f"Config saved")
     print_json(cfg.to_dict())
 
 

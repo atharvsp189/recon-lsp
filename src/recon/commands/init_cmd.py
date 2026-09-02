@@ -94,7 +94,7 @@ def init(
     config_path = get_project_config_path(repo_path)
     if config_path.exists():
         existing = load_config(repo_path)
-        console.print(f"\n  [yellow]⚠ Existing config found at {config_path}[/yellow]")
+        console.print(f"\n  [yellow]⚠ Existing config found[/yellow]")
         if existing.language:
             console.print(f"    Language: [cyan]{existing.language}[/cyan]")
         if not Confirm.ask("  Overwrite existing configuration?", default=False):
@@ -163,7 +163,7 @@ def init(
         repo_path=repo_path,
     )
     saved_path = save_project_config(config, repo_path)
-    print_success(f"Configuration saved to {saved_path}")
+    print_success(f"Configuration saved")
 
     # 5. Show next steps
     console.print(Panel(

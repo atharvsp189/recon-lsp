@@ -176,7 +176,13 @@ def handle_connection(conn: socket.socket) -> None:
             send_frame(conn, {"status": "error", "error": "Missing 'lang' or 'repo_path' in request."})
             return
 
-        entry = get_or_create_lsp(lang, repo_path)
+        try:
+            entry = get_or_create_lsp(lang, repo_path)
+        except Exception as e:
+            log.exception("Error booting LSP")
+            send_frame(conn, {"status": "setup_error", "lang": lang, "error": str(e)})
+            return
+
         lsp_kwargs = {k: v for k, v in payload.items() if k not in ("cmd", "lang", "repo_path")}
         result = entry.execute(cmd, **lsp_kwargs)
         send_frame(conn, {"status": "ok", "result": result})

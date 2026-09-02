@@ -188,6 +188,18 @@ def spawn_daemon() -> None:
 # Request dispatch
 # ---------------------------------------------------------------------------
 
+def _handle_setup_error(lang: str, error_msg: str) -> None:
+    from recon.commands.setup_cmd import LANGUAGE_METADATA
+    meta = LANGUAGE_METADATA.get(lang, {})
+    guide = meta.get("manual_guide", f"Run `recon setup {lang} -i`")
+    msg = (
+        f"{error_msg}\n\n"
+        f"Facing issue in auto setup. Please follow this instruction to install the language server:\n"
+        f"{guide}"
+    )
+    raise RuntimeError(msg)
+
+
 def dispatch_request(payload: dict) -> Any:
     """
     Send a request to the daemon and return the decoded result.
@@ -215,6 +227,8 @@ def dispatch_request(payload: dict) -> Any:
 
     if response.get("status") == "error":
         raise RuntimeError(response.get("error", "Unknown daemon error"))
+    if response.get("status") == "setup_error":
+        _handle_setup_error(response.get("lang"), response.get("error", ""))
 
     return response.get("result")
 
@@ -243,8 +257,14 @@ def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> A
 
     config = MultilspyConfig.from_dict({"code_language": lang})
     logger = MultilspyLogger()
-    lsp = SyncLanguageServer.create(config, logger, repo_path)
-    with lsp.start_server():
+    try:
+        lsp = SyncLanguageServer.create(config, logger, repo_path)
+        ctx = lsp.start_server()
+        ctx.__enter__()
+    except Exception as e:
+        _handle_setup_error(lang, str(e))
+
+    try:
         if cmd == "definition":
             return lsp.request_definition(kwargs["file_path"], kwargs["line"], kwargs["col"])
         elif cmd == "references":
@@ -263,3 +283,5 @@ def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> A
             )
         else:
             raise ValueError(f"Unknown command: {cmd}")
+    finally:
+        ctx.__exit__(None, None, None)
