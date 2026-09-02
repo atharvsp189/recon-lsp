@@ -212,7 +212,7 @@ def completions(
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    allow_incomplete: bool = typer.Option(False, "--allow-incomplete", help="Allow incomplete completion results"),
+    allow_incomplete: bool = typer.Option(True, "--allow-incomplete", help="Allow incomplete completion results"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),

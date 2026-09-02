@@ -1,5 +1,5 @@
 [project]
-name = "recon-lsp"
+name = "recon_lsp"
 version = "0.1.0"
 description = "LSP-powered code reconnaissance CLI — semantic code intelligence for AI agents and humans."
 readme = "README.md"
@@ -29,5 +29,9 @@ dependencies = [
 recon = "recon.main:app"
 
 [build-system]
-requires = ["uv_build>=0.11.25,<0.12.0"]
+requires = ["uv_build>=0.12,<0.13"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "recon"
+module-root = "src"
