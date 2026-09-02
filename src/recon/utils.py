@@ -29,14 +29,14 @@ def resolve_column(
     line: int,
     column: Optional[int],
     symbol: Optional[str],
-) -> int:
+) -> tuple[int, int]:
     """
-    Resolve a column number from either an explicit column or a symbol name.
-    If --symbol is given, searches for the symbol on the given line and returns
-    its starting column. This eliminates character-counting for agents/humans.
+    Resolve a line and column number from either an explicit column or a symbol name.
+    If --symbol is given, searches for the symbol on the given line (with ±2 line fuzzy search)
+    and returns its (line, starting column).
     """
     if column is not None:
-        return column
+        return line, column
     if symbol is None:
         raise ValueError("You must provide either --column or --symbol.")
 
@@ -44,12 +44,17 @@ def resolve_column(
     try:
         with open(full_path, "r", encoding="utf-8") as f:
             lines = f.read().splitlines()
-        if line < 0 or line >= len(lines):
-            raise ValueError(f"Line {line} is out of bounds (file has {len(lines)} lines).")
-        col = lines[line].find(symbol)
-        if col == -1:
-            raise ValueError(f"Symbol '{symbol}' not found on line {line}.")
-        return col
+        
+        # Fuzzy search ±2 lines
+        search_offsets = [0, 1, -1, 2, -2]
+        for offset in search_offsets:
+            test_line = line + offset
+            if 0 <= test_line < len(lines):
+                col = lines[test_line].find(symbol)
+                if col != -1:
+                    return test_line, col
+
+        raise ValueError(f"Symbol '{symbol}' not found on or around line {line + 1} (1-indexed).")
     except ValueError:
         raise
     except Exception as e:

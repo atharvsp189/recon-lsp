@@ -31,11 +31,23 @@ def print_human(data: Any) -> None:
         for item in data:
             if isinstance(item, dict) and ("range" in item or "location" in item):
                 loc = item.get("location", item)
-                path = loc.get("relativePath") or loc.get("absolutePath", "unknown")
-                line = loc.get("range", {}).get("start", {}).get("line", "?")
+                path = loc.get("relativePath") or loc.get("absolutePath")
+                if not path and "uri" in loc:
+                    import urllib.parse
+                    import os
+                    raw_path = urllib.parse.unquote(urllib.parse.urlparse(loc["uri"]).path)
+                    try:
+                        path = os.path.relpath(raw_path)
+                    except ValueError:
+                        path = raw_path
+                path = path or "unknown"
+                
+                # Format line number as 1-indexed for display
+                line = loc.get("range", {}).get("start", {}).get("line")
+                line_display = str(line + 1) if isinstance(line, int) else "?"
                 name = item.get("name", "")
                 label = f"  [dim]— {name}[/dim]" if name else ""
-                console.print(f"  [cyan]{path}[/cyan]:[yellow]{line}[/yellow]{label}")
+                console.print(f"  [cyan]{path}[/cyan]:[yellow]{line_display}[/yellow]{label}")
 
                 context = item.get("context") or loc.get("context")
                 if context:

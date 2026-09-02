@@ -30,11 +30,24 @@ app = typer.Typer(help="LSP query commands for semantic code intelligence.")
 def _resolve_env(
     lang: Optional[str],
     repo_path: Optional[str],
+    file_path: Optional[str] = None,
 ) -> tuple[str, str]:
     """Resolve language and repo_path from CLI flags or config."""
     cfg = load_config(repo_path)
     final_lang = lang or cfg.language
     final_repo = repo_path or cfg.repo_path
+
+    if not final_lang and file_path:
+        ext = Path(file_path).suffix.lower()
+        ext_map = {
+            ".py": "python", ".rs": "rust", ".go": "go",
+            ".ts": "typescript", ".js": "javascript",
+            ".java": "java", ".cs": "csharp",
+            ".cpp": "cpp", ".c": "cpp", ".h": "cpp", ".hpp": "cpp",
+            ".rb": "ruby", ".dart": "dart", ".php": "php",
+            ".ex": "elixir", ".exs": "elixir", ".kt": "kotlin"
+        }
+        final_lang = ext_map.get(ext)
 
     if not final_lang:
         print_error("Missing --lang and no default set. Run 'recon init' first.")
@@ -60,7 +73,7 @@ def _get_format(human: bool, table: bool, cfg_fmt: str = "json") -> str:
 @app.command()
 def definition(
     file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
-    line: int = typer.Option(..., "--line", "-L", help="Line number (0-indexed)"),
+    line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
     column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
@@ -72,10 +85,11 @@ def definition(
 ):
     """Find the definition of a symbol at the given location."""
     try:
-        lang_r, repo_r = _resolve_env(lang, repo_path)
-        col = resolve_column(repo_r, file_path, line, column, symbol)
-        res = dispatch_lsp_request("definition", lang_r, repo_r, no_daemon, file_path=file_path, line=line, col=col)
-        res = add_context_to_locations(res, context_lines)
+        lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
+        line_0 = line - 1
+        line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
+        res = dispatch_lsp_request("definition", lang_r, repo_r, no_daemon, file_path=file_path, line=line_0, col=col)
+        res = add_context_to_locations(res or [], context_lines)
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Definition")
     except typer.Exit:
@@ -92,7 +106,7 @@ def definition(
 @app.command()
 def references(
     file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
-    line: int = typer.Option(..., "--line", "-L", help="Line number (0-indexed)"),
+    line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
     column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
@@ -104,10 +118,11 @@ def references(
 ):
     """Find all references to a symbol at the given location."""
     try:
-        lang_r, repo_r = _resolve_env(lang, repo_path)
-        col = resolve_column(repo_r, file_path, line, column, symbol)
-        res = dispatch_lsp_request("references", lang_r, repo_r, no_daemon, file_path=file_path, line=line, col=col)
-        res = add_context_to_locations(res, context_lines)
+        lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
+        line_0 = line - 1
+        line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
+        res = dispatch_lsp_request("references", lang_r, repo_r, no_daemon, file_path=file_path, line=line_0, col=col)
+        res = add_context_to_locations(res or [], context_lines)
         fmt = _get_format(human, table)
         print_output(res, fmt, title="References")
     except typer.Exit:
@@ -124,7 +139,7 @@ def references(
 @app.command()
 def hover(
     file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
-    line: int = typer.Option(..., "--line", "-L", help="Line number (0-indexed)"),
+    line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
     column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
@@ -134,9 +149,10 @@ def hover(
 ):
     """Get hover information (docs, types, signatures) at the given location."""
     try:
-        lang_r, repo_r = _resolve_env(lang, repo_path)
-        col = resolve_column(repo_r, file_path, line, column, symbol)
-        res = dispatch_lsp_request("hover", lang_r, repo_r, no_daemon, file_path=file_path, line=line, col=col)
+        lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
+        line_0 = line - 1
+        line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
+        res = dispatch_lsp_request("hover", lang_r, repo_r, no_daemon, file_path=file_path, line=line_0, col=col)
         fmt = _get_format(human, False)
         print_output(res, fmt, title="Hover")
     except typer.Exit:
@@ -161,7 +177,7 @@ def symbols(
 ):
     """Get all symbols (classes, functions, variables) in a file."""
     try:
-        lang_r, repo_r = _resolve_env(lang, repo_path)
+        lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
         res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=file_path)
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Document Symbols")
@@ -207,7 +223,7 @@ def workspace_symbols(
 @app.command()
 def completions(
     file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
-    line: int = typer.Option(..., "--line", "-L", help="Line number (0-indexed)"),
+    line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
     column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
@@ -219,11 +235,12 @@ def completions(
 ):
     """Get completions at the given location."""
     try:
-        lang_r, repo_r = _resolve_env(lang, repo_path)
-        col = resolve_column(repo_r, file_path, line, column, symbol)
+        lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
+        line_0 = line - 1
+        line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
         res = dispatch_lsp_request(
             "completions", lang_r, repo_r, no_daemon,
-            file_path=file_path, line=line, col=col, allow_incomplete=allow_incomplete,
+            file_path=file_path, line=line_0, col=col, allow_incomplete=allow_incomplete,
         )
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Completions")
