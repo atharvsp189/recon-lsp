@@ -140,22 +140,28 @@ def init(
             print_success(f"Language server '{server}' is verified and ready!")
         else:
             console.print(f"\n  [yellow]⚠ Language server verification probe reported:[/yellow] {msg}")
-            if Confirm.ask(f"  Would you like to install '{server}' automatically now?", default=True):
-                inst_ok, inst_msg = install_server(language, repo_path)
-                if inst_ok:
-                    print_success("Installation succeeded! Re-verifying...")
-                    re_ok, re_msg = verify_server_probe(language, repo_path)
-                    if re_ok:
-                        print_success(f"Language server '{server}' is ready! ✨")
-                    else:
-                        console.print(f"[yellow]Re-verification note:[/yellow] {re_msg}")
-                else:
-                    print_error(f"Installation failed: {inst_msg}")
-                    if not Confirm.ask("  Continue configuration anyway?", default=True):
-                        raise typer.Exit(code=1)
-            else:
-                if not Confirm.ask("  Continue configuration anyway?", default=True):
-                    raise typer.Exit(code=1)
+            
+            # TODO: Automated installation is disabled for the MVP release.
+            from recon.commands.setup_cmd import LANGUAGE_METADATA
+            meta = LANGUAGE_METADATA.get(language, {})
+            console.print(f"\n[bold]Automated installation is currently disabled. Please follow the manual instructions:[/bold]\n  {meta.get('manual_guide', '')}")
+            
+            # if Confirm.ask(f"  Would you like to install '{server}' automatically now?", default=True):
+            #     inst_ok, inst_msg = install_server(language, repo_path)
+            #     if inst_ok:
+            #         print_success("Installation succeeded! Re-verifying...")
+            #         re_ok, re_msg = verify_server_probe(language, repo_path)
+            #         if re_ok:
+            #             print_success(f"Language server '{server}' is ready! ✨")
+            #         else:
+            #             console.print(f"[yellow]Re-verification note:[/yellow] {re_msg}")
+            #     else:
+            #         print_error(f"Installation failed: {inst_msg}")
+            #         if not Confirm.ask("  Continue configuration anyway?", default=True):
+            #             raise typer.Exit(code=1)
+            # else:
+            if not Confirm.ask("\n  Continue configuration anyway?", default=True):
+                raise typer.Exit(code=1)
 
     # 4. Save config
     config = ReconConfig(
