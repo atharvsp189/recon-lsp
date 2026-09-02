@@ -179,6 +179,10 @@ def symbols(
     try:
         lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
         res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=file_path)
+        if res and isinstance(res, list):
+            for item in res:
+                if isinstance(item, dict) and "location" not in item:
+                    item["location"] = {"relativePath": file_path, "range": item.get("range", {})}
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Document Symbols")
     except typer.Exit:
@@ -257,11 +261,14 @@ def completions(
 @app.command()
 def batch(
     file: str = typer.Option(..., "--file", "-f", help="Path to JSON file containing array of queries"),
+    context: Optional[int] = typer.Option(None, "--context", help="Override default context lines for all queries"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
 ):
     """Run multiple LSP queries from a JSON file in one go."""
+    import time
+    start_time = time.monotonic()
     try:
         with open(file, "r", encoding="utf-8") as f:
             queries = json.load(f)
@@ -270,19 +277,26 @@ def batch(
             raise ValueError("JSON file must contain an array of query objects.")
             
         results = []
+        success_count = 0
+        fail_count = 0
+        
         for i, q in enumerate(queries):
             cmd = q.get("command")
             if not cmd:
-                results.append({"error": f"Query {i} missing 'command' field."})
+                results.append({"query": q, "error": f"Query {i} missing 'command' field."})
+                fail_count += 1
                 continue
                 
             try:
                 lang_r, repo_r = _resolve_env(q.get("lang"), q.get("repo_path"), q.get("file_path"))
             except typer.Exit:
-                results.append({"error": f"Query {i} failed to resolve environment."})
+                results.append({"query": q, "error": f"Query {i} failed to resolve environment."})
+                fail_count += 1
                 continue
             
             try:
+                ctx_lines = context if context is not None else q.get("context_lines", 2)
+                
                 if cmd in ("definition", "references", "hover", "completions"):
                     line = q.get("line")
                     if line is None:
@@ -299,25 +313,46 @@ def batch(
                             file_path=q.get("file_path"), line=line_0, col=col)
                         
                     if cmd in ("definition", "references"):
-                        res = add_context_to_locations(res or [], q.get("context_lines", 2))
+                        res = add_context_to_locations(res or [], ctx_lines)
                 
                 elif cmd == "symbols":
                     res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=q.get("file_path"))
+                    if res and isinstance(res, list):
+                        for item in res:
+                            if isinstance(item, dict) and "location" not in item:
+                                item["location"] = {"relativePath": q.get("file_path"), "range": item.get("range", {})}
                 
                 elif cmd == "workspace-symbols":
                     res = dispatch_lsp_request("workspace_symbol", lang_r, repo_r, no_daemon, query=q.get("query"))
-                    res = add_context_to_locations(res or [], q.get("context_lines", 2))
+                    res = add_context_to_locations(res or [], ctx_lines)
                 else:
                     raise ValueError(f"Unknown command: {cmd}")
                     
                 results.append({"query": q, "result": res})
+                success_count += 1
             except Exception as e:
                 results.append({"query": q, "error": str(e)})
+                fail_count += 1
+
+        duration = (time.monotonic() - start_time) * 1000
+        envelope = {
+            "total": len(queries),
+            "succeeded": success_count,
+            "failed": fail_count,
+            "duration_ms": round(duration, 2),
+            "results": results
+        }
 
         fmt = _get_format(human, table)
-        print_output(results, fmt, title="Batch Results")
+        if fmt == "human" or fmt == "table":
+            from recon.lsp.output import print_info
+            print_info(f"Batch completed in {envelope['duration_ms']}ms: {success_count} succeeded, {fail_count} failed.")
+            print_output(results, fmt, title="Batch Results")
+        else:
+            print_output(envelope, fmt, title="Batch Results")
     except typer.Exit:
         raise
     except Exception as e:
+        from recon.lsp.output import print_error
         print_error(str(e))
         raise typer.Exit(code=1)
