@@ -185,3 +185,22 @@ recon batch -f queries.json
 | **Kotlin** | kotlin-language-server | Auto-download (Requires Java 11+) |
 
 Run `recon setup` to see real-time toolchain and installation diagnostics for all languages on your system.
+
+---
+
+## ⚠️ Language Specific Notes & Troubleshooting
+
+Since `recon` leverages real Language Servers, it expects your project to be in a buildable/analyzable state. Here are the requirements for accurate results across all supported languages:
+
+* **Python**: Ensure third-party dependencies are installed in your active environment (`venv`, `poetry`, `uv`) so the language server can resolve external imports.
+* **TypeScript / JavaScript**: You must run `npm install`, `yarn`, or `pnpm install`. The compiler cannot build an accurate AST without `node_modules` present.
+* **C / C++**: You must generate a `compile_commands.json` at the root of your project (e.g., using `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1`). Without this, `clangd` degrades into a basic, less-accurate parser.
+* **Go**: Ensure the `go` binary is installed in your `PATH`. Running `go mod tidy` or `go mod download` is highly recommended before querying to resolve all external packages.
+* **Rust**: Ensure your code successfully checks (`cargo check`). The `rust-analyzer` needs a valid `Cargo.toml` to index macros and dependencies properly.
+* **Java**: The project must be properly configured with `pom.xml` (Maven) or `build.gradle` (Gradle). Note: The Eclipse JDT.LS backend requires Java 17+ installed on your system.
+* **C#**: Requires the .NET 6+ SDK. Ensure you have restored your `.sln` or `.csproj` files (e.g., `dotnet restore`) so NuGet packages are resolved.
+* **Ruby**: Run `bundle install` and `yard gems` to ensure documentation and gem dependencies are available to the `solargraph` server.
+* **PHP**: Run `composer install` to download dependencies for accurate symbol resolution via `intelephense`.
+* **Elixir**: Requires Elixir 1.13+ and Erlang 24+. Run `mix deps.get` to fetch dependencies for `elixir-ls`.
+* **Kotlin**: Requires Java 11+. Ensure your Gradle/Maven wrappers are functional and dependencies are synced.
+* **Dart**: Run `dart pub get` or `flutter pub get` to resolve packages for the built-in Dart analysis server.
