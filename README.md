@@ -81,6 +81,7 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon symbols -f <file>` | List all classes, functions, variables in a file |
 | `recon workspace-symbols -q <query>` | Search symbols across the entire workspace |
 | `recon completions -f <file> -L <line> -s <sym>` | Get context-aware autocompletions |
+| `recon batch -f <queries.json>` | Run multiple LSP queries from a JSON file in one go |
 
 ### 🔧 Daemon Management
 
@@ -115,15 +116,54 @@ recon symbols -f main.py --table
 | Flag | Short | Description |
 |---|---|---|
 | `--file-path` | `-f` | Relative path to the file |
-| `--line` | `-L` | Line number (0-indexed) |
-| `--symbol` | `-s` | Symbol name (auto-calculates column, eliminating manual indexing) |
-| `--column` | `-c` | Column number (alternative to `--symbol`) |
-| `--lang` | `-l` | Language (overrides saved config) |
-| `--repo-path` | `-r` | Repository root (overrides saved config) |
+| `--line` | `-L` | Line number **(1-indexed)** |
+| `--symbol` | `-s` | Symbol name. Used instead of column. (Fuzzy searches ±2 lines if not exactly on `-L`) |
+| `--column` | `-c` | Column number (0-indexed). Alternative to `--symbol` |
+| `--lang` | `-l` | Language (Optional. Auto-detected from file extension) |
+| `--repo-path` | `-r` | Repository root (Defaults to current directory) |
 | `--context <N>` | | Number of surrounding lines to fetch for matched locations |
 | `--human` | `-H` | Human-readable formatted output |
 | `--table` | `-T` | Rich table terminal output |
-| `--no-daemon` | | Bypass daemon and run in-process (for debugging or isolated CI) |
+| `--no-daemon` | | Bypass daemon and run in-process |
+
+---
+
+## 🤖 For AI Agents
+
+`recon` is heavily optimized for use by LLMs and AI Agents. When using `recon` as an agent, keep these tips in mind:
+
+1. **Use `--symbol` instead of `--column`**: Never guess column numbers! Just pass the line number (`-L`) and the exact string symbol (`-s`). `recon` will automatically resolve the column.
+2. **Fuzzy Line Matching**: If your line number is slightly off due to recent edits, `recon` will automatically search ±2 lines around your `-L` parameter to find the symbol.
+3. **Automatic Language Detection**: You can omit `-l` (e.g., `-l python`); `recon` infers it directly from the `--file-path` extension.
+4. **Always use `--context`**: Pass `--context 3` or `--context 5` when running `definition` or `references`. This embeds the actual source code directly in the JSON response, saving you from running `cat` or `view_file` later!
+5. **Default Output is JSON**: Do not pass `--human` or `--table` if you are an agent. The default JSON output is structured and parses perfectly into your context window.
+6. **Batch Queries**: Use `recon batch -f queries.json` to execute multiple queries at once. This avoids starting up the process multiple times and can run instantly via the daemon. 
+
+Example Agent Command (Single):
+```bash
+recon definition -f src/recon/utils.py -L 26 -s resolve_column --context 5
+```
+
+Example Agent Command (Batch):
+```json
+[
+  {
+    "command": "definition",
+    "file_path": "src/recon/utils.py",
+    "line": 26,
+    "symbol": "resolve_column",
+    "context_lines": 3
+  },
+  {
+    "command": "workspace-symbols",
+    "query": "dispatch_lsp_request",
+    "lang": "python"
+  }
+]
+```
+```bash
+recon batch -f queries.json
+```
 
 ---
 

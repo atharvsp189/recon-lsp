@@ -78,7 +78,7 @@ def definition(
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    context_lines: int = typer.Option(0, "--context", help="Surrounding lines to include"),
+    context_lines: int = typer.Option(2, "--context", help="Surrounding lines to include"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
@@ -111,7 +111,7 @@ def references(
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    context_lines: int = typer.Option(0, "--context", help="Surrounding lines to include"),
+    context_lines: int = typer.Option(2, "--context", help="Surrounding lines to include"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
@@ -197,7 +197,7 @@ def workspace_symbols(
     query: str = typer.Option(..., "--query", "-q", help="Symbol name to search for"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    context_lines: int = typer.Option(0, "--context", help="Surrounding lines to include"),
+    context_lines: int = typer.Option(2, "--context", help="Surrounding lines to include"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
@@ -244,6 +244,78 @@ def completions(
         )
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Completions")
+    except typer.Exit:
+        raise
+    except Exception as e:
+        print_error(str(e))
+        raise typer.Exit(code=1)
+
+# ---------------------------------------------------------------------------
+# batch
+# ---------------------------------------------------------------------------
+
+@app.command()
+def batch(
+    file: str = typer.Option(..., "--file", "-f", help="Path to JSON file containing array of queries"),
+    human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
+    table: bool = typer.Option(False, "--table", "-T", help="Table output"),
+    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+):
+    """Run multiple LSP queries from a JSON file in one go."""
+    try:
+        with open(file, "r", encoding="utf-8") as f:
+            queries = json.load(f)
+        
+        if not isinstance(queries, list):
+            raise ValueError("JSON file must contain an array of query objects.")
+            
+        results = []
+        for i, q in enumerate(queries):
+            cmd = q.get("command")
+            if not cmd:
+                results.append({"error": f"Query {i} missing 'command' field."})
+                continue
+                
+            try:
+                lang_r, repo_r = _resolve_env(q.get("lang"), q.get("repo_path"), q.get("file_path"))
+            except typer.Exit:
+                results.append({"error": f"Query {i} failed to resolve environment."})
+                continue
+            
+            try:
+                if cmd in ("definition", "references", "hover", "completions"):
+                    line = q.get("line")
+                    if line is None:
+                        raise ValueError("Missing 'line' field.")
+                    line_0 = line - 1
+                    line_0, col = resolve_column(repo_r, q.get("file_path"), line_0, q.get("column"), q.get("symbol"))
+                    
+                    if cmd == "completions":
+                        res = dispatch_lsp_request(cmd, lang_r, repo_r, no_daemon, 
+                            file_path=q.get("file_path"), line=line_0, col=col, 
+                            allow_incomplete=q.get("allow_incomplete", True))
+                    else:
+                        res = dispatch_lsp_request(cmd, lang_r, repo_r, no_daemon, 
+                            file_path=q.get("file_path"), line=line_0, col=col)
+                        
+                    if cmd in ("definition", "references"):
+                        res = add_context_to_locations(res or [], q.get("context_lines", 2))
+                
+                elif cmd == "symbols":
+                    res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=q.get("file_path"))
+                
+                elif cmd == "workspace-symbols":
+                    res = dispatch_lsp_request("workspace_symbol", lang_r, repo_r, no_daemon, query=q.get("query"))
+                    res = add_context_to_locations(res or [], q.get("context_lines", 2))
+                else:
+                    raise ValueError(f"Unknown command: {cmd}")
+                    
+                results.append({"query": q, "result": res})
+            except Exception as e:
+                results.append({"query": q, "error": str(e)})
+
+        fmt = _get_format(human, table)
+        print_output(results, fmt, title="Batch Results")
     except typer.Exit:
         raise
     except Exception as e:

@@ -34,7 +34,7 @@ from recon.commands.setup_cmd import setup
 from recon.commands.daemon_cmd import app as daemon_app
 from recon.commands.info_cmd import info
 from recon.commands.query import (
-    definition, references, hover, symbols, workspace_symbols, completions,
+    definition, references, hover, symbols, workspace_symbols, completions, batch,
 )
 
 console = Console()
@@ -77,6 +77,7 @@ app.command("hover", help="Get hover information (docs, types, signatures) at th
 app.command("symbols", help="Get all symbols (classes, functions, variables) in a file.")(symbols)
 app.command("workspace-symbols", help="Find symbols across the whole workspace matching a query.")(workspace_symbols)
 app.command("completions", help="Get completions at the given location.")(completions)
+app.command("batch", help="Run multiple LSP queries from a JSON file in one go.")(batch)
 
 
 # ---------------------------------------------------------------------------
