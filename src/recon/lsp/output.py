@@ -31,11 +31,18 @@ def print_human(data: Any) -> None:
         for item in data:
             if isinstance(item, dict) and ("range" in item or "location" in item):
                 loc = item.get("location", item)
-                path = loc.get("relativePath") or loc.get("absolutePath", "unknown")
-                line = loc.get("range", {}).get("start", {}).get("line", "?")
+                path = loc.get("relativePath") or loc.get("absolutePath")
+                if not path and "uri" in loc:
+                    from recon.utils import uri_to_path
+                    path = uri_to_path(loc["uri"])
+                path = path or "unknown"
+                
+                # Format line number as 1-indexed for display
+                line = loc.get("range", {}).get("start", {}).get("line")
+                line_display = str(line + 1) if isinstance(line, int) else "?"
                 name = item.get("name", "")
                 label = f"  [dim]— {name}[/dim]" if name else ""
-                console.print(f"  [cyan]{path}[/cyan]:[yellow]{line}[/yellow]{label}")
+                console.print(f"  [cyan]{path}[/cyan]:[yellow]{line_display}[/yellow]{label}")
 
                 context = item.get("context") or loc.get("context")
                 if context:
@@ -105,4 +112,4 @@ def print_success(message: str) -> None:
 
 def print_info(message: str) -> None:
     """Print an informational message."""
-    console.print(f"[blue bold]ℹ[/blue bold] {message}")
+    console.print(f"[blue bold]{message}[/blue bold]")

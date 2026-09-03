@@ -166,27 +166,64 @@ def wait_for_daemon_socket() -> bool:
     while time.monotonic() < deadline:
         try:
             conn = connect_to_daemon()
+            send_frame(conn, {"cmd": "ping"})
+            resp = recv_frame(conn)
             conn.close()
-            return True
+            if resp.get("result") == "pong":
+                return True
         except (ConnectionRefusedError, FileNotFoundError, OSError):
             time.sleep(SOCKET_POLL_INTERVAL)
     return False
 
 
+def get_daemon_python_executable() -> str:
+    """Resolve the Python executable within the current environment/venv."""
+    if sys.platform == "win32":
+        venv_python = Path(sys.prefix) / "Scripts" / "python.exe"
+    else:
+        venv_python = Path(sys.prefix) / "bin" / "python"
+
+    if venv_python.exists():
+        return str(venv_python)
+    return sys.executable
+
+
 def spawn_daemon() -> None:
     """Launch the recon daemon as a detached background process."""
+    kwargs = {}
+    if sys.platform == "win32":
+        # DETACHED_PROCESS (0x00000008) + CREATE_NEW_PROCESS_GROUP (0x00000200)
+        kwargs["creationflags"] = 0x00000008 | 0x00000200
+        kwargs["start_new_session"] = False
+    else:
+        kwargs["start_new_session"] = True
+
+    python_exe = get_daemon_python_executable()
+
     subprocess.Popen(
-        [sys.executable, "-m", "recon.daemon"],
-        start_new_session=True,
+        [python_exe, "-m", "recon.daemon"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         close_fds=True,
+        **kwargs
     )
 
 
 # ---------------------------------------------------------------------------
 # Request dispatch
 # ---------------------------------------------------------------------------
+
+def _handle_setup_error(lang: str, error_msg: str) -> None:
+    from recon.commands.setup_cmd import LANGUAGE_METADATA
+    meta = LANGUAGE_METADATA.get(lang, {})
+    guide = meta.get("manual_guide", f"Run `recon setup {lang} -i`")
+    msg = (
+        f"{error_msg}\n\n"
+        f"Facing issue in auto setup. Please follow this instruction to install the language server:\n"
+        f"{guide}"
+    )
+    raise RuntimeError(msg)
+
 
 def dispatch_request(payload: dict) -> Any:
     """
@@ -215,6 +252,8 @@ def dispatch_request(payload: dict) -> Any:
 
     if response.get("status") == "error":
         raise RuntimeError(response.get("error", "Unknown daemon error"))
+    if response.get("status") == "setup_error":
+        _handle_setup_error(response.get("lang"), response.get("error", ""))
 
     return response.get("result")
 
@@ -243,8 +282,14 @@ def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> A
 
     config = MultilspyConfig.from_dict({"code_language": lang})
     logger = MultilspyLogger()
-    lsp = SyncLanguageServer.create(config, logger, repo_path)
-    with lsp.start_server():
+    try:
+        lsp = SyncLanguageServer.create(config, logger, repo_path)
+        ctx = lsp.start_server()
+        ctx.__enter__()
+    except Exception as e:
+        _handle_setup_error(lang, str(e))
+
+    try:
         if cmd == "definition":
             return lsp.request_definition(kwargs["file_path"], kwargs["line"], kwargs["col"])
         elif cmd == "references":
@@ -263,3 +308,5 @@ def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> A
             )
         else:
             raise ValueError(f"Unknown command: {cmd}")
+    finally:
+        ctx.__exit__(None, None, None)
