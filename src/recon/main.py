@@ -9,13 +9,22 @@ Usage:
     recon definition -f main.py ...     # LSP query commands
     recon daemon start|stop|status      # Daemon lifecycle
     recon info                          # Show project config & status
+    recon agent-skill                    # Print recon-skills workflow for AI agents
     recon config --lang python          # Set/view config
 """
 
+import sys
 import json
 import typer
 from pathlib import Path
 from typing import Optional
+
+# Force UTF-8 encoding on Windows to prevent UnicodeEncodeError with emojis
+if sys.platform == "win32":
+    if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from rich.console import Console
 
@@ -34,7 +43,7 @@ from recon.commands.setup_cmd import setup
 from recon.commands.daemon_cmd import app as daemon_app
 from recon.commands.info_cmd import info
 from recon.commands.query import (
-    definition, references, hover, symbols, workspace_symbols, completions,
+    definition, references, hover, symbols, workspace_symbols, completions, batch,
 )
 
 console = Console()
@@ -45,23 +54,67 @@ console = Console()
 
 app = typer.Typer(
     name="recon",
-    help="🔍 Recon — LSP-powered code reconnaissance for AI agents and humans.",
+    help=(
+        "Recon — LSP-powered code reconnaissance for AI agents and humans."
+        "\n\nAI agents: run [bold cyan]recon agent-skill[/bold cyan] for the recon-skills reconnaissance workflow."
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
+
+def version_callback(value: bool):
+    if value:
+        from importlib.metadata import version, PackageNotFoundError
+        try:
+            ver = version("recon-lsp")
+        except PackageNotFoundError:
+            ver = "unknown"
+        console.print(f"Recon LSP Version: [bold cyan]{ver}[/bold cyan]")
+        raise typer.Exit()
+
+@app.callback()
+def main(
+    version: Optional[bool] = typer.Option(
+        None, "--version", "-v", callback=version_callback, is_eager=True, help="Show the version and exit."
+    )
+):
+    pass
 
 # ---------------------------------------------------------------------------
 # Register core commands
 # ---------------------------------------------------------------------------
 
 # `recon init` — interactive setup wizard
-app.command("init", help="🔍 Initialize a new recon project with interactive wizard.")(init)
+app.command("init", help="Initialize a new recon project with interactive wizard.")(init)
 
 # `recon setup` — language server diagnostics, installer, and verification
-app.command("setup", help="🔧 Diagnose, install, or verify language servers.")(setup)
+app.command("setup", help="Diagnose, install, or verify language servers.")(setup)
 
 # `recon info` — project info display
-app.command("info", help="ℹ️  Show project info, daemon status, and config paths.")(info)
+app.command("info", help="Show project info, daemon status, and config paths.")(info)
+
+@app.command("agent-skill", help="Print the recon-skills reconnaissance workflow for AI agents.")
+def agent_skill():
+    """Print the recon-skills skill: a structured rg + recon workflow for codebase reconnaissance."""
+    from rich.markdown import Markdown
+    import pkgutil
+
+    # Try reading from packaged data first
+    try:
+        data = pkgutil.get_data("recon", "SKILL.md")
+        if data:
+            instructions = data.decode("utf-8")
+        else:
+            raise FileNotFoundError()
+    except (FileNotFoundError, OSError):
+        # Fallback for local development
+        local_path = Path(__file__).parent / "SKILL.md"
+        if local_path.exists():
+            instructions = local_path.read_text(encoding="utf-8")
+        else:
+            instructions = "# Recon Scout\n(Skill file not found. Please read SKILL.md in the repository.)"
+
+    console.print(Markdown(instructions))
 
 # `recon daemon start|stop|status|restart` — daemon lifecycle subgroup
 app.add_typer(daemon_app, name="daemon")
@@ -77,13 +130,14 @@ app.command("hover", help="Get hover information (docs, types, signatures) at th
 app.command("symbols", help="Get all symbols (classes, functions, variables) in a file.")(symbols)
 app.command("workspace-symbols", help="Find symbols across the whole workspace matching a query.")(workspace_symbols)
 app.command("completions", help="Get completions at the given location.")(completions)
+app.command("batch", help="Run multiple LSP queries from a JSON file in one go.")(batch)
 
 
 # ---------------------------------------------------------------------------
 # Config command (simple, on root)
 # ---------------------------------------------------------------------------
 
-@app.command("config", help="⚙️  View or set configuration defaults.")
+@app.command("config", help="View or set configuration defaults.")
 def config(
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Default language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Default repo path"),
@@ -113,7 +167,7 @@ def config(
     else:
         path = save_project_config(cfg, repo_path)
 
-    print_success(f"Config saved to {path}")
+    print_success(f"Config saved")
     print_json(cfg.to_dict())
 
 

@@ -1,4 +1,4 @@
-# 🔍 Recon — LSP-Powered Code Reconnaissance
+# Recon — LSP-Powered Code Reconnaissance
 
 [![PyPI version](https://badge.fury.io/py/recon-lsp.svg)](https://badge.fury.io/py/recon-lsp)
 [![Python Versions](https://img.shields.io/pypi/pyversions/recon-lsp.svg)](https://pypi.org/project/recon-lsp/)
@@ -9,7 +9,7 @@ Recon turns Language Server Protocol superpowers into simple terminal commands. 
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Option 1: Install globally via `uv` or `pipx` (Recommended)
 This makes `recon` accessible from anywhere in your terminal:
@@ -33,7 +33,7 @@ uvx recon-lsp --help
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # 1. Interactive setup (creates .recon.toml in current repo)
@@ -56,7 +56,7 @@ recon hover -f src/main.py -L 10 -s MyClass
 
 ---
 
-## 🛠️ Commands Reference
+## Commands Reference
 
 ### Setup & Configuration
 
@@ -70,8 +70,9 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon setup <lang> -j` | Output diagnostics as structured JSON for AI agents |
 | `recon config --lang <l>` | Set project defaults (`.recon.toml`) |
 | `recon info` | Show current config, daemon status, and paths |
+| `recon agent-skill` | Print the recon-skills reconnaissance workflow for AI agents |
 
-### 🔍 LSP Queries
+### LSP Queries
 
 | Command | Description |
 |---|---|
@@ -81,8 +82,9 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon symbols -f <file>` | List all classes, functions, variables in a file |
 | `recon workspace-symbols -q <query>` | Search symbols across the entire workspace |
 | `recon completions -f <file> -L <line> -s <sym>` | Get context-aware autocompletions |
+| `recon batch -f <queries.json>` | Run multiple LSP queries from a JSON file in one go |
 
-### 🔧 Daemon Management
+### Daemon Management
 
 The daemon **auto-starts** on your first query. You can also control it manually:
 
@@ -95,7 +97,7 @@ The daemon **auto-starts** on your first query. You can also control it manually
 
 ---
 
-## 🖥️ Output Formats
+## Output Formats
 
 ```bash
 # JSON (default, ideal for AI agents and automated scripts)
@@ -110,24 +112,63 @@ recon symbols -f main.py --table
 
 ---
 
-## ⚙️ Core Flags
+## Core Flags
 
 | Flag | Short | Description |
 |---|---|---|
 | `--file-path` | `-f` | Relative path to the file |
-| `--line` | `-L` | Line number (0-indexed) |
-| `--symbol` | `-s` | Symbol name (auto-calculates column, eliminating manual indexing) |
-| `--column` | `-c` | Column number (alternative to `--symbol`) |
-| `--lang` | `-l` | Language (overrides saved config) |
-| `--repo-path` | `-r` | Repository root (overrides saved config) |
+| `--line` | `-L` | Line number **(1-indexed)** |
+| `--symbol` | `-s` | Symbol name. Used instead of column. (Fuzzy searches ±2 lines if not exactly on `-L`) |
+| `--column` | `-c` | Column number (0-indexed). Alternative to `--symbol` |
+| `--lang` | `-l` | Language (Optional. Auto-detected from file extension) |
+| `--repo-path` | `-r` | Repository root (Defaults to current directory) |
 | `--context <N>` | | Number of surrounding lines to fetch for matched locations |
 | `--human` | `-H` | Human-readable formatted output |
 | `--table` | `-T` | Rich table terminal output |
-| `--no-daemon` | | Bypass daemon and run in-process (for debugging or isolated CI) |
+| `--no-daemon` | | Bypass daemon and run in-process |
 
 ---
 
-## 🌐 Supported Languages & Tools
+## For AI Agents
+
+`recon` is heavily optimized for use by LLMs and AI Agents. When using `recon` as an agent, keep these tips in mind:
+
+1. **Use `--symbol` instead of `--column`**: Never guess column numbers! Just pass the line number (`-L`) and the exact string symbol (`-s`). `recon` will automatically resolve the column.
+2. **Fuzzy Line Matching**: If your line number is slightly off due to recent edits, `recon` will automatically search ±2 lines around your `-L` parameter to find the symbol.
+3. **Automatic Language Detection**: You can omit `-l` (e.g., `-l python`); `recon` infers it directly from the `--file-path` extension.
+4. **Always use `--context`**: Pass `--context 3` or `--context 5` when running `definition` or `references`. This embeds the actual source code directly in the JSON response, saving you from running `cat` or `view_file` later!
+5. **Default Output is JSON**: Do not pass `--human` or `--table` if you are an agent. The default JSON output is structured and parses perfectly into your context window.
+6. **Batch Queries**: Use `recon batch -f queries.json` to execute multiple queries at once. This avoids starting up the process multiple times and can run instantly via the daemon. 
+
+Example Agent Command (Single):
+```bash
+recon definition -f src/recon/utils.py -L 26 -s resolve_column --context 5
+```
+
+Example Agent Command (Batch):
+```json
+[
+  {
+    "command": "definition",
+    "file_path": "src/recon/utils.py",
+    "line": 26,
+    "symbol": "resolve_column",
+    "context_lines": 3
+  },
+  {
+    "command": "workspace-symbols",
+    "query": "dispatch_lsp_request",
+    "lang": "python"
+  }
+]
+```
+```bash
+recon batch -f queries.json
+```
+
+---
+
+## Supported Languages & Tools
 
 | Language | Language Server | Setup Support |
 |---|---|---|
@@ -145,3 +186,22 @@ recon symbols -f main.py --table
 | **Kotlin** | kotlin-language-server | Auto-download (Requires Java 11+) |
 
 Run `recon setup` to see real-time toolchain and installation diagnostics for all languages on your system.
+
+---
+
+## Language Specific Notes & Troubleshooting
+
+Since `recon` leverages real Language Servers, it expects your project to be in a buildable/analyzable state. Here are the requirements for accurate results across all supported languages:
+
+* **Python**: Ensure third-party dependencies are installed in your active environment (`venv`, `poetry`, `uv`) so the language server can resolve external imports.
+* **TypeScript / JavaScript**: You must run `npm install`, `yarn`, or `pnpm install`. The compiler cannot build an accurate AST without `node_modules` present.
+* **C / C++**: You must generate a `compile_commands.json` at the root of your project (e.g., using `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1`). Without this, `clangd` degrades into a basic, less-accurate parser.
+* **Go**: Ensure the `go` binary is installed in your `PATH`. Running `go mod tidy` or `go mod download` is highly recommended before querying to resolve all external packages.
+* **Rust**: Ensure your code successfully checks (`cargo check`). The `rust-analyzer` needs a valid `Cargo.toml` to index macros and dependencies properly.
+* **Java**: The project must be properly configured with `pom.xml` (Maven) or `build.gradle` (Gradle). Note: The Eclipse JDT.LS backend requires Java 17+ installed on your system.
+* **C#**: Requires the .NET 6+ SDK. Ensure you have restored your `.sln` or `.csproj` files (e.g., `dotnet restore`) so NuGet packages are resolved.
+* **Ruby**: Run `bundle install` and `yard gems` to ensure documentation and gem dependencies are available to the `solargraph` server.
+* **PHP**: Run `composer install` to download dependencies for accurate symbol resolution via `intelephense`.
+* **Elixir**: Requires Elixir 1.13+ and Erlang 24+. Run `mix deps.get` to fetch dependencies for `elixir-ls`.
+* **Kotlin**: Requires Java 11+. Ensure your Gradle/Maven wrappers are functional and dependencies are synced.
+* **Dart**: Run `dart pub get` or `flutter pub get` to resolve packages for the built-in Dart analysis server.

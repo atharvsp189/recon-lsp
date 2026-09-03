@@ -39,8 +39,7 @@ def start():
     if wait_for_daemon_socket():
         print_success("Daemon started successfully.")
     else:
-        print_error("Daemon did not become ready in time.")
-        console.print(f"  [dim]Check log: {get_log_file()}[/dim]")
+        print_error("Daemon did not become ready in time. Check daemon log.")
         raise typer.Exit(code=1)
 
 
@@ -74,28 +73,32 @@ def status():
     try:
         result = dispatch_request({"cmd": "status"})
         cached = result.get("cached_lsps", [])
+        total_mem = result.get("total_memory_mb", 0.0)
+        
+        mem_str = f" [bold magenta]({total_mem} MB total memory)[/bold magenta]" if total_mem else ""
 
         if cached:
             table = Table(title="Cached LSP Instances", show_lines=False)
             table.add_column("Language", style="cyan bold")
             table.add_column("Repository", style="green")
+            table.add_column("Memory", style="magenta")
             for entry in cached:
-                table.add_row(entry["lang"], entry["repo_path"])
+                mem = f"{entry.get('memory_mb', 0.0)} MB" if entry.get('memory_mb') else "Unknown"
+                table.add_row(entry["lang"], entry["repo_path"], mem)
 
             console.print(Panel(
-                "[green bold]Daemon is running.[/green bold]",
+                f"[green bold]Daemon is running.[/green bold]{mem_str}",
                 title="Daemon Status",
                 border_style="green",
             ))
             console.print(table)
         else:
             console.print(Panel(
-                "[green bold]Daemon is running.[/green bold]\n\n"
+                f"[green bold]Daemon is running.[/green bold]{mem_str}\n\n"
                 "[dim]No LSP instances cached yet. Run a query to warm up.[/dim]",
                 title="Daemon Status",
                 border_style="green",
             ))
-        console.print(f"\n  [dim]Log: {get_log_file()}[/dim]")
     except Exception:
         print_error("Daemon is running but unreachable.")
 
