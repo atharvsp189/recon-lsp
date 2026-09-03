@@ -1,4 +1,4 @@
-# 🔍 Recon — LSP-Powered Code Reconnaissance
+# Recon — LSP-Powered Code Reconnaissance
 
 [![PyPI version](https://badge.fury.io/py/recon-lsp.svg)](https://badge.fury.io/py/recon-lsp)
 [![Python Versions](https://img.shields.io/pypi/pyversions/recon-lsp.svg)](https://pypi.org/project/recon-lsp/)
@@ -9,7 +9,7 @@ Recon turns Language Server Protocol superpowers into simple terminal commands. 
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Option 1: Install globally via `uv` or `pipx` (Recommended)
 This makes `recon` accessible from anywhere in your terminal:
@@ -33,7 +33,7 @@ uvx recon-lsp --help
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # 1. Interactive setup (creates .recon.toml in current repo)
@@ -56,7 +56,7 @@ recon hover -f src/main.py -L 10 -s MyClass
 
 ---
 
-## 🛠️ Commands Reference
+## Commands Reference
 
 ### Setup & Configuration
 
@@ -70,8 +70,9 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon setup <lang> -j` | Output diagnostics as structured JSON for AI agents |
 | `recon config --lang <l>` | Set project defaults (`.recon.toml`) |
 | `recon info` | Show current config, daemon status, and paths |
+| `recon agent-skill` | Print the recon-skills reconnaissance workflow for AI agents |
 
-### 🔍 LSP Queries
+### LSP Queries
 
 | Command | Description |
 |---|---|
@@ -83,7 +84,7 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon completions -f <file> -L <line> -s <sym>` | Get context-aware autocompletions |
 | `recon batch -f <queries.json>` | Run multiple LSP queries from a JSON file in one go |
 
-### 🔧 Daemon Management
+### Daemon Management
 
 The daemon **auto-starts** on your first query. You can also control it manually:
 
@@ -96,7 +97,7 @@ The daemon **auto-starts** on your first query. You can also control it manually
 
 ---
 
-## 🖥️ Output Formats
+## Output Formats
 
 ```bash
 # JSON (default, ideal for AI agents and automated scripts)
@@ -111,7 +112,7 @@ recon symbols -f main.py --table
 
 ---
 
-## ⚙️ Core Flags
+## Core Flags
 
 | Flag | Short | Description |
 |---|---|---|
@@ -128,7 +129,7 @@ recon symbols -f main.py --table
 
 ---
 
-## 🤖 For AI Agents
+## For AI Agents
 
 `recon` is heavily optimized for use by LLMs and AI Agents. When using `recon` as an agent, keep these tips in mind:
 
@@ -167,7 +168,7 @@ recon batch -f queries.json
 
 ---
 
-## 🌐 Supported Languages & Tools
+## Supported Languages & Tools
 
 | Language | Language Server | Setup Support |
 |---|---|---|
@@ -188,7 +189,7 @@ Run `recon setup` to see real-time toolchain and installation diagnostics for al
 
 ---
 
-## ⚠️ Language Specific Notes & Troubleshooting
+## Language Specific Notes & Troubleshooting
 
 Since `recon` leverages real Language Servers, it expects your project to be in a buildable/analyzable state. Here are the requirements for accurate results across all supported languages:
 

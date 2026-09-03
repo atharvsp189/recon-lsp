@@ -112,4 +112,4 @@ def print_success(message: str) -> None:
 
 def print_info(message: str) -> None:
     """Print an informational message."""
-    console.print(f"[blue bold]ℹ[/blue bold] {message}")
+    console.print(f"[blue bold]{message}[/blue bold]")

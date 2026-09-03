@@ -9,6 +9,7 @@ Usage:
     recon definition -f main.py ...     # LSP query commands
     recon daemon start|stop|status      # Daemon lifecycle
     recon info                          # Show project config & status
+    recon agent-skill                    # Print recon-skills workflow for AI agents
     recon config --lang python          # Set/view config
 """
 
@@ -53,7 +54,10 @@ console = Console()
 
 app = typer.Typer(
     name="recon",
-    help="Recon — LSP-powered code reconnaissance for AI agents and humans.",
+    help=(
+        "Recon — LSP-powered code reconnaissance for AI agents and humans."
+        "\n\nAI agents: run [bold cyan]recon agent-skill[/bold cyan] for the recon-skills reconnaissance workflow."
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
@@ -88,6 +92,29 @@ app.command("setup", help="Diagnose, install, or verify language servers.")(setu
 
 # `recon info` — project info display
 app.command("info", help="Show project info, daemon status, and config paths.")(info)
+
+@app.command("agent-skill", help="Print the recon-skills reconnaissance workflow for AI agents.")
+def agent_skill():
+    """Print the recon-skills skill: a structured rg + recon workflow for codebase reconnaissance."""
+    from rich.markdown import Markdown
+    import pkgutil
+
+    # Try reading from packaged data first
+    try:
+        data = pkgutil.get_data("recon", "SKILL.md")
+        if data:
+            instructions = data.decode("utf-8")
+        else:
+            raise FileNotFoundError()
+    except (FileNotFoundError, OSError):
+        # Fallback for local development
+        local_path = Path(__file__).parent / "SKILL.md"
+        if local_path.exists():
+            instructions = local_path.read_text(encoding="utf-8")
+        else:
+            instructions = "# Recon Scout\n(Skill file not found. Please read SKILL.md in the repository.)"
+
+    console.print(Markdown(instructions))
 
 # `recon daemon start|stop|status|restart` — daemon lifecycle subgroup
 app.add_typer(daemon_app, name="daemon")

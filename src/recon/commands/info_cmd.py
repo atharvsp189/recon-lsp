@@ -61,6 +61,6 @@ def info(
 
     console.print(Panel(
         info_text,
-        title="🔍 Recon Info",
+        title="Recon Info",
         border_style="blue",
     ))

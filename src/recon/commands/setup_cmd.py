@@ -302,7 +302,7 @@ def setup(
     ),
 ):
     """
-    🔧 Install, diagnose, and verify language servers.
+    Install, diagnose, and verify language servers.
 
     Without arguments: displays diagnostic status overview of all 12 supported languages.
     With language argument: diagnoses prerequisites, verifies probe, or installs with --install.
@@ -365,7 +365,7 @@ def setup(
         f"{'([red]missing: ' + ', '.join(missing_prereqs) + '[/red])' if missing_prereqs else '[green]✓ all met[/green]'}\n"
         f"[bold cyan]Binary Status:[/bold cyan]   {'[green]✓ Found[/green]' if has_bin else '[yellow]Not detected in PATH[/yellow]'}\n"
         f"[bold cyan]Auto-Download:[/bold cyan]   {'[green]Yes (via multilspy)[/green]' if meta.get('auto_download') else 'No (requires package manager)'}",
-        title=f"🔍 Language Server Diagnostics: {language.upper()}",
+        title=f"Language Server Diagnostics: {language.upper()}",
         border_style="cyan",
     ))
 
@@ -383,9 +383,9 @@ def setup(
     console.print(f"\n[dim]Probing {server_name} startup...[/dim]")
     probe_ok, probe_msg = verify_server_probe(language, repo_path)
     if probe_ok:
-        print_success(f"Language server '{server_name}' is fully operational! ✨")
+        print_success(f"Language server '{server_name}' is fully operational!")
     else:
-        console.print(f"[yellow]⚠ Server probe failed:[/yellow] {probe_msg}")
+        console.print(f"[yellow]⚠Server probe failed:[/yellow] {probe_msg}")
         
         # TODO: Automated installation is disabled for the MVP release.
         # if not install and (meta.get("install_cmd") or meta.get("auto_download")):
@@ -395,7 +395,7 @@ def setup(
         #             print_success(f"Installation completed! Re-verifying...")
         #             probe_ok, probe_msg = verify_server_probe(language, repo_path)
         #             if probe_ok:
-        #                 print_success(f"Language server '{server_name}' is now working! ✨")
+        #                 print_success(f"Language server '{server_name}' is now working!")
         #                 return
         #             else:
         #                 print_error(f"Re-verification failed: {probe_msg}")
@@ -418,7 +418,7 @@ def _show_all_languages_diagnostics(as_json: bool = False) -> None:
             status = "[green]✓ Installed[/green]"
             action = "Ready to use"
         elif auto_dl and has_prereqs:
-            status = "[cyan]⚡ Auto-downloads[/cyan]"
+            status = "[cyan]Auto-downloads[/cyan]"
             action = f"Manual install"
         elif not has_prereqs:
             status = "[red]✗ Toolchain missing[/red]"
@@ -442,7 +442,7 @@ def _show_all_languages_diagnostics(as_json: bool = False) -> None:
         print_json(records)
         return
 
-    table = Table(title="🔍 Recon Language Server Diagnostics", show_lines=False)
+    table = Table(title="Recon Language Server Diagnostics", show_lines=False)
     table.add_column("Language", style="cyan bold", width=12)
     table.add_column("Language Server", style="green", width=26)
     table.add_column("Status", width=22)

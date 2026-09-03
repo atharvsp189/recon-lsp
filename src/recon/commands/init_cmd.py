@@ -69,13 +69,13 @@ def init(
     ),
 ):
     """
-    🔍 Interactive setup wizard for recon.
+    Interactive setup wizard for recon.
 
     Sets up a .recon.toml config file and verifies/installs
     the language server.
     """
     console.print(Panel(
-        "[bold blue]🔍 Recon — Code Reconnaissance Setup[/bold blue]\n\n"
+        "[bold blue]Recon — Code Reconnaissance Setup[/bold blue]\n\n"
         "This wizard will configure recon for your project.",
         border_style="blue",
     ))
@@ -88,13 +88,13 @@ def init(
             default=default_path,
         )
     repo_path = str(Path(repo_path).resolve())
-    console.print(f"  📁 Repository: [cyan]{repo_path}[/cyan]")
+    console.print(f"  Repository: [cyan]{repo_path}[/cyan]")
 
     # Check if config already exists
     config_path = get_project_config_path(repo_path)
     if config_path.exists():
         existing = load_config(repo_path)
-        console.print(f"\n  [yellow]⚠ Existing config found[/yellow]")
+        console.print(f"\n  [yellow]Existing config found[/yellow]")
         if existing.language:
             console.print(f"    Language: [cyan]{existing.language}[/cyan]")
         if not Confirm.ask("  Overwrite existing configuration?", default=False):
@@ -129,8 +129,8 @@ def init(
                     console.print(f"[red]Unknown language '{choice}'. Try again.[/red]")
 
     server = LANGUAGE_SERVERS.get(language, "unknown")
-    console.print(f"\n  🔧 Language: [cyan bold]{language}[/cyan bold]")
-    console.print(f"  🖥️  Server:   [green]{server}[/green]")
+    console.print(f"\n  Language: [cyan bold]{language}[/cyan bold]")
+    console.print(f"  Server:   [green]{server}[/green]")
 
     # 3. Verify language server & auto-install if missing
     if not skip_verify:
@@ -139,7 +139,7 @@ def init(
         if ok:
             print_success(f"Language server '{server}' is verified and ready!")
         else:
-            console.print(f"\n  [yellow]⚠ Language server verification probe reported:[/yellow] {msg}")
+            console.print(f"\n [yellow]⚠Language server verification probe reported:[/yellow] {msg}")
             
             # TODO: Automated installation is disabled for the MVP release.
             from recon.commands.setup_cmd import LANGUAGE_METADATA
@@ -152,7 +152,7 @@ def init(
             #         print_success("Installation succeeded! Re-verifying...")
             #         re_ok, re_msg = verify_server_probe(language, repo_path)
             #         if re_ok:
-            #             print_success(f"Language server '{server}' is ready! ✨")
+            #             print_success(f"Language server '{server}' is ready!")
             #         else:
             #             console.print(f"[yellow]Re-verification note:[/yellow] {re_msg}")
             #     else:
@@ -180,6 +180,6 @@ def init(
         f"  [cyan]recon references -f <file> -L <line> -s <sym>[/cyan]  — Find all usages\n"
         f"  [cyan]recon hover -f <file> -L <line> -s <sym>[/cyan]       — Docstrings & types\n"
         f"  [cyan]recon daemon status[/cyan]                         — Check daemon status\n",
-        title="🚀 Next Steps",
+        title="Next Steps",
         border_style="green",
     ))
