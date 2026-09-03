@@ -53,23 +53,41 @@ console = Console()
 
 app = typer.Typer(
     name="recon",
-    help="🔍 Recon — LSP-powered code reconnaissance for AI agents and humans.",
+    help="Recon — LSP-powered code reconnaissance for AI agents and humans.",
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
+
+def version_callback(value: bool):
+    if value:
+        from importlib.metadata import version, PackageNotFoundError
+        try:
+            ver = version("recon-lsp")
+        except PackageNotFoundError:
+            ver = "unknown"
+        console.print(f"Recon LSP Version: [bold cyan]{ver}[/bold cyan]")
+        raise typer.Exit()
+
+@app.callback()
+def main(
+    version: Optional[bool] = typer.Option(
+        None, "--version", "-v", callback=version_callback, is_eager=True, help="Show the version and exit."
+    )
+):
+    pass
 
 # ---------------------------------------------------------------------------
 # Register core commands
 # ---------------------------------------------------------------------------
 
 # `recon init` — interactive setup wizard
-app.command("init", help="🔍 Initialize a new recon project with interactive wizard.")(init)
+app.command("init", help="Initialize a new recon project with interactive wizard.")(init)
 
 # `recon setup` — language server diagnostics, installer, and verification
-app.command("setup", help="🔧 Diagnose, install, or verify language servers.")(setup)
+app.command("setup", help="Diagnose, install, or verify language servers.")(setup)
 
 # `recon info` — project info display
-app.command("info", help="ℹ️  Show project info, daemon status, and config paths.")(info)
+app.command("info", help="Show project info, daemon status, and config paths.")(info)
 
 # `recon daemon start|stop|status|restart` — daemon lifecycle subgroup
 app.add_typer(daemon_app, name="daemon")
@@ -92,7 +110,7 @@ app.command("batch", help="Run multiple LSP queries from a JSON file in one go."
 # Config command (simple, on root)
 # ---------------------------------------------------------------------------
 
-@app.command("config", help="⚙️  View or set configuration defaults.")
+@app.command("config", help="View or set configuration defaults.")
 def config(
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Default language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Default repo path"),

@@ -139,6 +139,21 @@ def get_or_create_lsp(lang: str, repo_path: str) -> LspEntry:
         return entry
 
 
+def get_memory_mb(pid: int) -> float:
+    """Return the RSS memory usage of a process in MB."""
+    try:
+        import psutil
+        return psutil.Process(pid).memory_info().rss / (1024 * 1024)
+    except Exception:
+        return 0.0
+
+def get_lsp_pid(entry: Any) -> int:
+    """Safely extract the underlying language server subprocess PID."""
+    try:
+        return entry.lsp.language_server.server.process.pid
+    except Exception:
+        return 0
+
 # ---------------------------------------------------------------------------
 # Connection handler
 # ---------------------------------------------------------------------------
@@ -164,9 +179,31 @@ def handle_connection(conn: socket.socket) -> None:
             return
 
         if cmd == "status":
+            import os
+            mem_mb = get_memory_mb(os.getpid())
+
             with _cache_lock:
-                cached = [{"lang": k[0], "repo_path": k[1]} for k in _lsp_cache]
-            send_frame(conn, {"status": "ok", "result": {"cached_lsps": cached}})
+                cached = []
+                for k, entry in _lsp_cache.items():
+                    lsp_mem_mb = 0.0
+                    pid = get_lsp_pid(entry)
+                    if pid:
+                        lsp_mem_mb = get_memory_mb(pid)
+                        mem_mb += lsp_mem_mb
+                    
+                    cached.append({
+                        "lang": k[0], 
+                        "repo_path": k[1], 
+                        "memory_mb": round(lsp_mem_mb, 2)
+                    })
+            
+            send_frame(conn, {
+                "status": "ok", 
+                "result": {
+                    "cached_lsps": cached, 
+                    "total_memory_mb": round(mem_mb, 2)
+                }
+            })
             return
 
         # --- LSP commands ---

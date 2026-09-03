@@ -166,11 +166,18 @@ def hover(
 # symbols (document symbols)
 # ---------------------------------------------------------------------------
 
-@app.command()
+# LSP SymbolKind: File=1, Module=2, Namespace=3, Package=4, Class=5, Method=6, Property=7, Field=8, 
+# Constructor=9, Enum=10, Interface=11, Function=12, Variable=13, Constant=14, String=15, 
+# Number=16, Boolean=17, Array=18, Object=19, Key=20, Null=21, EnumMember=22, Struct=23, 
+# Event=24, Operator=25, TypeParameter=26
+NON_DECLARATIONS = frozenset({13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26})
+
+@app.command("symbols")
 def symbols(
     file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
     repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
+    declarations_only: bool = typer.Option(False, "--declarations-only", help="Filter out variables, strings, and non-declarative symbols"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
@@ -180,9 +187,15 @@ def symbols(
         lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
         res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=file_path)
         if res and isinstance(res, list):
+            filtered_res = []
             for item in res:
-                if isinstance(item, dict) and "location" not in item:
-                    item["location"] = {"relativePath": file_path, "range": item.get("range", {})}
+                if isinstance(item, dict):
+                    if declarations_only and item.get("kind") in NON_DECLARATIONS:
+                        continue
+                    if "location" not in item:
+                        item["location"] = {"relativePath": file_path, "range": item.get("range", {})}
+                    filtered_res.append(item)
+            res = filtered_res
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Document Symbols")
     except typer.Exit:
@@ -260,8 +273,9 @@ def completions(
 
 @app.command()
 def batch(
-    file: str = typer.Option(..., "--file", "-f", help="Path to JSON file containing array of queries"),
+    file: str = typer.Option(..., "--file", "-f", help="Path to JSON file containing array of queries. E.g. [{\"command\": \"definition\", \"file_path\": \"...\", \"line\": 10, \"symbol\": \"foo\"}]"),
     context: Optional[int] = typer.Option(None, "--context", help="Override default context lines for all queries"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse the JSON file and print the queries without executing them"),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
     no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
@@ -275,6 +289,11 @@ def batch(
         
         if not isinstance(queries, list):
             raise ValueError("JSON file must contain an array of query objects.")
+            
+        if dry_run:
+            fmt = _get_format(human, table)
+            print_output(queries, fmt, title="Dry Run Queries")
+            return
             
         results = []
         success_count = 0
