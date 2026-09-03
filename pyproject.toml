@@ -1,5 +1,5 @@
 [project]
-name = "recon_lsp"
+name = "recon-lsp"
 version = "0.1.0"
 description = "LSP-powered code reconnaissance CLI — semantic code intelligence for AI agents and humans."
 readme = "README.md"
