@@ -2,7 +2,7 @@
 
 Recon provides a rich set of commands to interact with your codebase using the Language Server Protocol.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # 1. Start querying your codebase immediately:
@@ -15,7 +15,7 @@ recon references -f src/main.py -L 10 -s MyClass --human
 recon hover -f src/main.py -L 10 -s MyClass
 ```
 
-## 🛠️ Commands Reference
+## Commands Reference
 
 ### Setup & Configuration
 
@@ -27,7 +27,7 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon setup <lang> -i` | Automatically install / download the language server |
 | `recon info` | Show current config, daemon status, and paths |
 
-### 🔍 LSP Queries
+### LSP Queries
 
 | Command | Description |
 |---|---|
@@ -38,7 +38,7 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon workspace-symbols -q <query>` | Search symbols across the entire workspace |
 | `recon completions -f <file> -L <line> -s <sym>` | Get context-aware autocompletions |
 
-### 🔧 Daemon Management
+### Daemon Management
 
 The daemon **auto-starts** on your first query, but you can manage it manually:
 
@@ -48,7 +48,7 @@ The daemon **auto-starts** on your first query, but you can manage it manually:
 | `recon daemon stop` | Gracefully shut down daemon and LSP child processes |
 | `recon daemon status` | Show running status and cached LSP server instances |
 
-## 🖥️ Output Formats
+## Output Formats
 
 By default, Recon outputs JSON, which is ideal for AI agents and automated scripts. However, you can format the output for human readability:
 
