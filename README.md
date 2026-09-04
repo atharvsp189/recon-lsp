@@ -1,15 +1,52 @@
+<p align="center">
+  <img src="assets/recon-readme-banner-v2.png" alt="Recon Banner" width="100%" />
+</p>
+
 # Recon — LSP-Powered Code Reconnaissance
 
 [![PyPI version](https://badge.fury.io/py/recon-lsp.svg)](https://badge.fury.io/py/recon-lsp)
 [![Python Versions](https://img.shields.io/pypi/pyversions/recon-lsp.svg)](https://pypi.org/project/recon-lsp/)
 
-Context Engineering for your Codebase. Semantic code intelligence CLI for AI agents.   
+**Context Engineering for your Codebase.** Semantic code intelligence CLI for AI agents and developers.
 
-Recon turns Language Server Protocol superpowers into simple terminal commands. No IDE required.
+Recon turns Language Server Protocol superpowers into simple terminal commands. No IDE required. 
+
+---
+
+## Why Recon? (LSP vs Grep)
+
+When autonomous AI agents navigate large codebases, reading whole files doesn't make sense. The standard fallback is `grep` or `ripgrep`. While great for text matching, text search can be incredibly noisy—analyzing many fragments without context wastes tokens, increases tool calls, and risks missing the right context.
+
+**Enter LSP (Language Server Protocol)**
+LSP builds a structural (AST) understanding of your code, powering the Intellisense in your IDE. Recon exposes all of these capabilities directly to the terminal, including:
+- **Go to Definition**
+- **Find References**
+- **Document Symbols (Classes, Functions, Variables)**
+- **Workspace Symbol Search**
+- **Hover (Types, Signatures, Docstrings)**
+- **Context-Aware Completions**
+
+Recon equips AI agents with **semantic code search**. Recent benchmarks comparing **LSP vs. grep** show clear advantages for AI coding agents:
+
+- **Exact Precision & Completeness**: Eliminate the 90%+ noise typical of text search. LSP understands scope and finds exact references that `grep` misses.
+- **2–34× Less Token Usage**: Structured, symbol-aware data drastically reduces context window bloat compared to raw file chunks.
+- **33% Faster & Cheaper**: Agents resolve definitions in a single tool call, cutting LLM execution time and inference costs.
+- **Agent-Agnostic**: Recon is the CLI bridge. It equips ANY coding agent framework with LSP superpowers, entirely independent of an IDE.
+
+---
+
+## Documentation
+Detailed documentation is available in the [docs](docs/) directory:
+- [Introduction & Philosophy](docs/index.md)
+- [Installation](docs/installation.md)
+- [Usage Guide](docs/usage.md)
+- [Agent Integration](docs/agent_integration.md)
 
 ---
 
 ## Installation
+
+Recon is officially published on PyPI.
 
 ### Option 1: Install globally via `uv` or `pipx` (Recommended)
 This makes `recon` accessible from anywhere in your terminal:
@@ -19,16 +56,11 @@ uv tool install recon-lsp
 pipx install recon-lsp
 ```
 
-### Option 2: Install into active Python environment / venv
+### Option 2: Install into active environment / venv
 ```bash
 pip install recon-lsp
 # or with uv:
 uv pip install recon-lsp
-```
-
-### Option 3: Run without installing via `uv run`
-```bash
-uvx recon-lsp --help
 ```
 
 ---
@@ -58,20 +90,6 @@ recon hover -f src/main.py -L 10 -s MyClass
 
 ## Commands Reference
 
-### Setup & Configuration
-
-| Command | Description |
-|---|---|
-| `recon init` | Interactive setup wizard (TUI with language picker & auto-verification) |
-| `recon setup` | Real-time diagnostic table for all 12 supported languages |
-| `recon setup <lang>` | Diagnose prerequisites & verify language server probe |
-| `recon setup <lang> -i` | Automatically install / download the language server |
-| `recon setup <lang> -v` | Fast probe verification only (clean exit code for scripts/CI) |
-| `recon setup <lang> -j` | Output diagnostics as structured JSON for AI agents |
-| `recon config --lang <l>` | Set project defaults (`.recon.toml`) |
-| `recon info` | Show current config, daemon status, and paths |
-| `recon agent-skill` | Print the recon-skills reconnaissance workflow for AI agents |
-
 ### LSP Queries
 
 | Command | Description |
@@ -82,18 +100,26 @@ recon hover -f src/main.py -L 10 -s MyClass
 | `recon symbols -f <file>` | List all classes, functions, variables in a file |
 | `recon workspace-symbols -q <query>` | Search symbols across the entire workspace |
 | `recon completions -f <file> -L <line> -s <sym>` | Get context-aware autocompletions |
-| `recon batch -f <queries.json>` | Run multiple LSP queries from a JSON file in one go |
+| `recon batch <file.json>` | Run multiple LSP queries from a JSON file in one go |
 
-### Daemon Management
-
-The daemon **auto-starts** on your first query. You can also control it manually:
+### Setup & Configuration
 
 | Command | Description |
 |---|---|
-| `recon daemon start` | Pre-warm the background daemon |
-| `recon daemon stop` | Gracefully shut down daemon and LSP child processes |
-| `recon daemon status` | Show running status and cached LSP server instances |
-| `recon daemon restart` | Stop and restart the daemon |
+| `recon init` | Interactive setup wizard (TUI with language picker & auto-verification) |
+| `recon setup` | Real-time diagnostic table for all 12 supported languages |
+| `recon setup <lang> -i` | Automatically install / download the language server |
+| `recon config --lang <l>` | View or set configuration defaults |
+| `recon info` | Show project info, daemon status, and config paths |
+
+### Daemon Management & AI
+
+| Command | Description |
+|---|---|
+| `recon daemon start/stop/status/restart` | Manage the background LSP daemon |
+| `recon agent-skill` | Print the recon-skills reconnaissance workflow for AI agents |
+
+*For full details and examples, view the [Usage Guide](docs/usage.md).*
 
 ---
 
@@ -117,54 +143,12 @@ recon symbols -f main.py --table
 | Flag | Short | Description |
 |---|---|---|
 | `--file-path` | `-f` | Relative path to the file |
-| `--line` | `-L` | Line number **(1-indexed)** |
-| `--symbol` | `-s` | Symbol name. Used instead of column. (Fuzzy searches ±2 lines if not exactly on `-L`) |
-| `--column` | `-c` | Column number (0-indexed). Alternative to `--symbol` |
-| `--lang` | `-l` | Language (Optional. Auto-detected from file extension) |
-| `--repo-path` | `-r` | Repository root (Defaults to current directory) |
+| `--line` | `-L` | Line number (0-indexed) |
+| `--symbol` | `-s` | Symbol name (auto-calculates column) |
+| `--column` | `-c` | Column number (alternative to `--symbol`) |
 | `--context <N>` | | Number of surrounding lines to fetch for matched locations |
 | `--human` | `-H` | Human-readable formatted output |
 | `--table` | `-T` | Rich table terminal output |
-| `--no-daemon` | | Bypass daemon and run in-process |
-
----
-
-## For AI Agents
-
-`recon` is heavily optimized for use by LLMs and AI Agents. When using `recon` as an agent, keep these tips in mind:
-
-1. **Use `--symbol` instead of `--column`**: Never guess column numbers! Just pass the line number (`-L`) and the exact string symbol (`-s`). `recon` will automatically resolve the column.
-2. **Fuzzy Line Matching**: If your line number is slightly off due to recent edits, `recon` will automatically search ±2 lines around your `-L` parameter to find the symbol.
-3. **Automatic Language Detection**: You can omit `-l` (e.g., `-l python`); `recon` infers it directly from the `--file-path` extension.
-4. **Always use `--context`**: Pass `--context 3` or `--context 5` when running `definition` or `references`. This embeds the actual source code directly in the JSON response, saving you from running `cat` or `view_file` later!
-5. **Default Output is JSON**: Do not pass `--human` or `--table` if you are an agent. The default JSON output is structured and parses perfectly into your context window.
-6. **Batch Queries**: Use `recon batch -f queries.json` to execute multiple queries at once. This avoids starting up the process multiple times and can run instantly via the daemon. 
-
-Example Agent Command (Single):
-```bash
-recon definition -f src/recon/utils.py -L 26 -s resolve_column --context 5
-```
-
-Example Agent Command (Batch):
-```json
-[
-  {
-    "command": "definition",
-    "file_path": "src/recon/utils.py",
-    "line": 26,
-    "symbol": "resolve_column",
-    "context_lines": 3
-  },
-  {
-    "command": "workspace-symbols",
-    "query": "dispatch_lsp_request",
-    "lang": "python"
-  }
-]
-```
-```bash
-recon batch -f queries.json
-```
 
 ---
 
