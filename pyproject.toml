@@ -35,3 +35,15 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "recon"
 module-root = "src"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --cov=recon --cov-report=term-missing"
+
