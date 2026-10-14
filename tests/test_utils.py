@@ -1,14 +1,14 @@
 import dataclasses
 import json
 import os
+
 import pytest
-from pathlib import Path
 
 from recon.utils import (
     ReconJSONEncoder,
+    add_context_to_locations,
     resolve_column,
     uri_to_path,
-    add_context_to_locations,
 )
 
 

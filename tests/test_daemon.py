@@ -1,27 +1,24 @@
-import json
 import socket
-import sys
 import threading
 import time
-from contextlib import ExitStack
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 import recon.daemon as daemon_mod
 from recon.daemon import (
     LspEntry,
-    _dispatch_lsp_cmd,
-    get_or_create_lsp,
-    get_memory_mb,
-    get_lsp_pid,
-    handle_connection,
-    _idle_watchdog,
     _cleanup,
+    _dispatch_lsp_cmd,
     _handle_sigterm,
+    _idle_watchdog,
+    get_lsp_pid,
+    get_memory_mb,
+    get_or_create_lsp,
+    handle_connection,
     run_daemon,
 )
-from recon.lsp.client import send_frame, recv_frame
+from recon.lsp.client import recv_frame, send_frame
 
 
 def test_lsp_entry_execute_and_stop():

@@ -9,30 +9,26 @@ Guides the user through:
   5. Next steps
 """
 
-import typer
 from pathlib import Path
-from typing import Optional
 
+import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from recon.config import (
-    SUPPORTED_LANGUAGES,
-    LANGUAGE_SERVERS,
-    ReconConfig,
-    save_project_config,
-    get_project_config_path,
-    load_config,
-)
 from recon.commands.setup_cmd import (
     verify_server_probe,
-    install_server,
-    check_prerequisites,
-    check_server_binary,
 )
-from recon.lsp.output import print_success, print_error, print_info
+from recon.config import (
+    LANGUAGE_SERVERS,
+    SUPPORTED_LANGUAGES,
+    ReconConfig,
+    get_project_config_path,
+    load_config,
+    save_project_config,
+)
+from recon.lsp.output import print_info, print_success
 
 console = Console()
 
@@ -55,13 +51,13 @@ def _display_languages() -> None:
 
 @app.callback(invoke_without_command=True)
 def init(
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None,
         "--repo-path",
         "-r",
         help="Repository path (defaults to current directory)",
     ),
-    language: Optional[str] = typer.Option(
+    language: str | None = typer.Option(
         None,
         "--lang",
         "-l",
@@ -101,7 +97,7 @@ def init(
     config_path = get_project_config_path(repo_path)
     if config_path.exists():
         existing = load_config(repo_path)
-        console.print(f"\n  [yellow]Existing config found[/yellow]")
+        console.print("\n  [yellow]Existing config found[/yellow]")
         if existing.language:
             console.print(f"    Language: [cyan]{existing.language}[/cyan]")
         if not Confirm.ask("  Overwrite existing configuration?", default=False):
@@ -181,18 +177,18 @@ def init(
         repo_path=repo_path,
     )
     saved_path = save_project_config(config, repo_path)
-    print_success(f"Configuration saved")
+    print_success("Configuration saved")
 
     # 5. Show next steps
     console.print(
         Panel(
-            f"[bold green]Setup complete![/bold green]\n\n"
-            f"Try these commands:\n"
-            f"  [cyan]recon symbols -f <file>[/cyan]                     — List symbols in a file\n"
-            f"  [cyan]recon definition -f <file> -L <line> -s <sym>[/cyan]  — Jump to definition\n"
-            f"  [cyan]recon references -f <file> -L <line> -s <sym>[/cyan]  — Find all usages\n"
-            f"  [cyan]recon hover -f <file> -L <line> -s <sym>[/cyan]       — Docstrings & types\n"
-            f"  [cyan]recon daemon status[/cyan]                         — Check daemon status\n",
+            "[bold green]Setup complete![/bold green]\n\n"
+            "Try these commands:\n"
+            "  [cyan]recon symbols -f <file>[/cyan]                     — List symbols in a file\n"
+            "  [cyan]recon definition -f <file> -L <line> -s <sym>[/cyan]  — Jump to definition\n"
+            "  [cyan]recon references -f <file> -L <line> -s <sym>[/cyan]  — Find all usages\n"
+            "  [cyan]recon hover -f <file> -L <line> -s <sym>[/cyan]       — Docstrings & types\n"
+            "  [cyan]recon daemon status[/cyan]                         — Check daemon status\n",
             title="Next Steps",
             border_style="green",
         )

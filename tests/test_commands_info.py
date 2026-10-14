@@ -1,7 +1,5 @@
-import pytest
-from typer.testing import CliRunner
-from recon.commands.info_cmd import app, info
-from recon.config import save_project_config, save_global_config, ReconConfig
+from recon.commands.info_cmd import app
+from recon.config import ReconConfig, save_global_config, save_project_config
 
 
 def test_info_command_defaults(runner, isolated_env):

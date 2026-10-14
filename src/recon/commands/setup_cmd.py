@@ -9,23 +9,20 @@ languages:
   - Fast probe verification (`recon setup <lang> --verify`)
 """
 
-import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
-import typer
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
+import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm
 from rich.table import Table
 
-from recon.config import SUPPORTED_LANGUAGES, LANGUAGE_SERVERS
-from recon.lsp.output import print_success, print_error, print_info, print_json
+from recon.config import SUPPORTED_LANGUAGES
+from recon.lsp.output import print_error, print_json, print_success
 
 console = Console()
 
@@ -35,7 +32,7 @@ app = typer.Typer(help="Install, diagnose, and verify language servers.")
 # Metadata: Prerequisites & Installation configs
 # ---------------------------------------------------------------------------
 
-LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
+LANGUAGE_METADATA: dict[str, dict[str, Any]] = {
     "python": {
         "server": "jedi-language-server",
         "prereqs": ["python3", "pip"],
@@ -159,7 +156,7 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
 # ---------------------------------------------------------------------------
 
 
-def check_prerequisites(language: str) -> Tuple[bool, List[str], List[str]]:
+def check_prerequisites(language: str) -> tuple[bool, list[str], list[str]]:
     """
     Check if required system tools (e.g. node, go, cargo, java) are installed.
     Returns (all_present, found_list, missing_list).
@@ -184,7 +181,7 @@ def check_prerequisites(language: str) -> Tuple[bool, List[str], List[str]]:
     return len(missing) == 0, found, missing
 
 
-def check_server_binary(language: str) -> Tuple[bool, Optional[str]]:
+def check_server_binary(language: str) -> tuple[bool, str | None]:
     """
     Check if the LSP server binary is directly executable in PATH or cached by multilspy.
     """
@@ -217,8 +214,8 @@ def check_server_binary(language: str) -> Tuple[bool, Optional[str]]:
 
 
 def verify_server_probe(
-    language: str, repo_path: Optional[str] = None
-) -> Tuple[bool, str]:
+    language: str, repo_path: str | None = None
+) -> tuple[bool, str]:
     """
     Boot the language server via multilspy for a fast probe test.
     """
@@ -247,7 +244,7 @@ def verify_server_probe(
 # ---------------------------------------------------------------------------
 
 
-def install_server(language: str, repo_path: Optional[str] = None) -> Tuple[bool, str]:
+def install_server(language: str, repo_path: str | None = None) -> tuple[bool, str]:
     """
     Execute automated installation or trigger multilspy's runtime dependency fetch.
     """
@@ -303,7 +300,7 @@ def install_server(language: str, repo_path: Optional[str] = None) -> Tuple[bool
 
 @app.callback(invoke_without_command=True)
 def setup(
-    language: Optional[str] = typer.Argument(
+    language: str | None = typer.Argument(
         None,
         help="Language to diagnose, install, or verify (e.g., python, rust, typescript, go)",
     ),
@@ -319,7 +316,7 @@ def setup(
         "-v",
         help="Run verification probe only (clean exit code)",
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None,
         "--repo-path",
         "-r",
@@ -458,13 +455,13 @@ def _show_all_languages_diagnostics(as_json: bool = False) -> None:
             action = "Ready to use"
         elif auto_dl and has_prereqs:
             status = "[cyan]Auto-downloads[/cyan]"
-            action = f"Manual install"
+            action = "Manual install"
         elif not has_prereqs:
             status = "[red]✗ Toolchain missing[/red]"
             action = f"Install {', '.join(missing)}"
         else:
             status = "[yellow]⚠ Server missing[/yellow]"
-            action = f"Manual install"
+            action = "Manual install"
 
         records.append(
             {

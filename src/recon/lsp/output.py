@@ -8,12 +8,12 @@ Supports three modes:
 """
 
 import json
-from typing import Any, List
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.syntax import Syntax
+from rich.table import Table
 
 from recon.utils import ReconJSONEncoder
 

@@ -8,11 +8,10 @@ Hierarchy (later overrides earlier):
 """
 
 import os
-import json
-import toml
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
+import toml
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -35,7 +34,7 @@ def get_global_config_path() -> Path:
     return get_global_config_dir() / "config.toml"
 
 
-def get_project_config_path(repo_path: Optional[str] = None) -> Path:
+def get_project_config_path(repo_path: str | None = None) -> Path:
     root = Path(repo_path).resolve() if repo_path else Path.cwd()
     return root / ".recon.toml"
 
@@ -108,8 +107,8 @@ class ReconConfig:
 
     def __init__(
         self,
-        language: Optional[str] = None,
-        repo_path: Optional[str] = None,
+        language: str | None = None,
+        repo_path: str | None = None,
         idle_timeout: int = 900,
         request_timeout: int = 30,
         default_format: str = "json",
@@ -153,7 +152,7 @@ class ReconConfig:
         )
 
 
-def load_config(repo_path: Optional[str] = None) -> ReconConfig:
+def load_config(repo_path: str | None = None) -> ReconConfig:
     """Load merged config: global defaults ← project overrides."""
     global_data = _load_toml(get_global_config_path())
     project_data = _load_toml(get_project_config_path(repo_path))
@@ -169,7 +168,7 @@ def load_config(repo_path: Optional[str] = None) -> ReconConfig:
     return ReconConfig.from_dict(merged)
 
 
-def save_project_config(config: ReconConfig, repo_path: Optional[str] = None) -> Path:
+def save_project_config(config: ReconConfig, repo_path: str | None = None) -> Path:
     """Save config to the project-level .recon.toml."""
     path = get_project_config_path(repo_path)
     _save_toml(path, config.to_dict())

@@ -1,6 +1,4 @@
 from unittest.mock import MagicMock
-import pytest
-from typer.testing import CliRunner
 
 from recon.commands.daemon_cmd import app
 

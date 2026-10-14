@@ -1,8 +1,6 @@
-import asyncio
 import os
-import sys
 import threading
-from unittest.mock import MagicMock
+
 import pytest
 
 import recon

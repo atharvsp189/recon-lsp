@@ -14,10 +14,9 @@ Usage:
 """
 
 import sys
-import json
-import typer
 from pathlib import Path
-from typing import Optional
+
+import typer
 
 # Force UTF-8 encoding on Windows to prevent UnicodeEncodeError with emojis
 if sys.platform == "win32":
@@ -28,29 +27,27 @@ if sys.platform == "win32":
 
 from rich.console import Console
 
-from recon.config import (
-    load_config,
-    save_project_config,
-    save_global_config,
-    ReconConfig,
-    get_project_config_path,
-)
-from recon.lsp.output import print_success, print_json
+from recon.commands.daemon_cmd import app as daemon_app
+from recon.commands.info_cmd import info
 
 # Import commands
 from recon.commands.init_cmd import init
-from recon.commands.setup_cmd import setup
-from recon.commands.daemon_cmd import app as daemon_app
-from recon.commands.info_cmd import info
 from recon.commands.query import (
+    batch,
+    completions,
     definition,
-    references,
     hover,
+    references,
     symbols,
     workspace_symbols,
-    completions,
-    batch,
 )
+from recon.commands.setup_cmd import setup
+from recon.config import (
+    load_config,
+    save_global_config,
+    save_project_config,
+)
+from recon.lsp.output import print_json, print_success
 
 console = Console()
 
@@ -71,7 +68,7 @@ app = typer.Typer(
 
 def version_callback(value: bool):
     if value:
-        from importlib.metadata import version, PackageNotFoundError
+        from importlib.metadata import PackageNotFoundError, version
 
         try:
             ver = version("recon-lsp")
@@ -83,7 +80,7 @@ def version_callback(value: bool):
 
 @app.callback()
 def main(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -116,8 +113,9 @@ app.command("info", help="Show project info, daemon status, and config paths.")(
 )
 def agent_skill():
     """Print the recon-skills skill: a structured rg + recon workflow for codebase reconnaissance."""
-    from rich.markdown import Markdown
     import pkgutil
+
+    from rich.markdown import Markdown
 
     # Try reading from packaged data first
     try:
@@ -173,8 +171,8 @@ app.command("batch", help="Run multiple LSP queries from a JSON file in one go."
 
 @app.command("config", help="View or set configuration defaults.")
 def config(
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Default language"),
-    repo_path: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(None, "--lang", "-l", help="Default language"),
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Default repo path"
     ),
     show: bool = typer.Option(False, "--show", help="Show current config"),
@@ -205,7 +203,7 @@ def config(
     else:
         path = save_project_config(cfg, repo_path)
 
-    print_success(f"Config saved")
+    print_success("Config saved")
     print_json(cfg.to_dict())
 
 

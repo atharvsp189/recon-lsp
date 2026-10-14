@@ -1,14 +1,13 @@
 import json
-import pytest
 
 from recon.lsp.output import (
-    print_json,
-    print_human,
-    print_table,
-    print_output,
     print_error,
-    print_success,
+    print_human,
     print_info,
+    print_json,
+    print_output,
+    print_success,
+    print_table,
 )
 
 

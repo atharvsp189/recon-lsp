@@ -13,7 +13,6 @@ Architecture:
 """
 
 import atexit
-import json
 import logging
 import os
 import signal
@@ -23,7 +22,7 @@ import threading
 import time
 from contextlib import ExitStack
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from multilspy import SyncLanguageServer
 from multilspy.multilspy_config import MultilspyConfig
@@ -31,14 +30,12 @@ from multilspy.multilspy_logger import MultilspyLogger
 
 from recon.lsp.client import (
     _USE_UNIX_SOCKET,
-    get_daemon_dir,
-    get_pid_file,
+    get_log_file,
     get_port_file,
     get_sock_file,
-    get_log_file,
+    recv_frame,
     release_daemon_pid,
     send_frame,
-    recv_frame,
     try_claim_daemon_pid,
 )
 
@@ -115,7 +112,7 @@ def _dispatch_lsp_cmd(lsp: SyncLanguageServer, cmd: str, **kwargs: Any) -> Any:
 
 
 # Global LSP cache: (lang, repo_path) -> LspEntry
-_lsp_cache: Dict[Tuple[str, str], LspEntry] = {}
+_lsp_cache: dict[tuple[str, str], LspEntry] = {}
 _cache_lock = threading.Lock()
 
 _last_request_time: float = time.monotonic()
@@ -371,7 +368,7 @@ def run_daemon() -> None:
     while not _shutdown_event.is_set():
         try:
             conn, _ = server.accept()
-        except socket.timeout:
+        except TimeoutError:
             continue
         except OSError:
             break

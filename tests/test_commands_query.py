@@ -1,22 +1,13 @@
 import json
 from unittest.mock import MagicMock
-from pathlib import Path
+
 import pytest
-from typer.testing import CliRunner
 
 from recon.commands.query import (
-    app,
-    _resolve_env,
     _get_format,
-    definition,
-    references,
-    hover,
-    symbols,
-    workspace_symbols,
-    completions,
-    batch,
+    _resolve_env,
+    app,
 )
-import recon.commands.query as query_mod
 
 
 def test_resolve_env_explicit(tmp_path):

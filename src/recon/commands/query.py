@@ -11,14 +11,14 @@ Commands:
 """
 
 import json
-import typer
 from pathlib import Path
-from typing import Optional
+
+import typer
 
 from recon.config import load_config
 from recon.lsp.client import dispatch_lsp_request
-from recon.lsp.output import print_output, print_error
-from recon.utils import resolve_column, add_context_to_locations
+from recon.lsp.output import print_error, print_output
+from recon.utils import add_context_to_locations, resolve_column
 
 app = typer.Typer(help="LSP query commands for semantic code intelligence.")
 
@@ -29,9 +29,9 @@ app = typer.Typer(help="LSP query commands for semantic code intelligence.")
 
 
 def _resolve_env(
-    lang: Optional[str],
-    repo_path: Optional[str],
-    file_path: Optional[str] = None,
+    lang: str | None,
+    repo_path: str | None,
+    file_path: str | None = None,
 ) -> tuple[str, str]:
     """Resolve language and repo_path from CLI flags or config."""
     cfg = load_config(repo_path)
@@ -89,16 +89,16 @@ def definition(
         ..., "--file-path", "-f", help="Relative path to the file"
     ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(
+    column: int | None = typer.Option(
         None, "--column", "-c", help="Column number (0-indexed)"
     ),
-    symbol: Optional[str] = typer.Option(
+    symbol: str | None = typer.Option(
         None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
     ),
-    lang: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(
         None, "--lang", "-l", help="Programming language"
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Repository root path"
     ),
     context_lines: int = typer.Option(
@@ -145,16 +145,16 @@ def references(
         ..., "--file-path", "-f", help="Relative path to the file"
     ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(
+    column: int | None = typer.Option(
         None, "--column", "-c", help="Column number (0-indexed)"
     ),
-    symbol: Optional[str] = typer.Option(
+    symbol: str | None = typer.Option(
         None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
     ),
-    lang: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(
         None, "--lang", "-l", help="Programming language"
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Repository root path"
     ),
     context_lines: int = typer.Option(
@@ -201,16 +201,16 @@ def hover(
         ..., "--file-path", "-f", help="Relative path to the file"
     ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(
+    column: int | None = typer.Option(
         None, "--column", "-c", help="Column number (0-indexed)"
     ),
-    symbol: Optional[str] = typer.Option(
+    symbol: str | None = typer.Option(
         None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
     ),
-    lang: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(
         None, "--lang", "-l", help="Programming language"
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Repository root path"
     ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
@@ -257,10 +257,10 @@ def symbols(
     file_path: str = typer.Option(
         ..., "--file-path", "-f", help="Relative path to the file"
     ),
-    lang: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(
         None, "--lang", "-l", help="Programming language"
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Repository root path"
     ),
     declarations_only: bool = typer.Option(
@@ -310,10 +310,10 @@ def symbols(
 @app.command("workspace-symbols")
 def workspace_symbols(
     query: str = typer.Option(..., "--query", "-q", help="Symbol name to search for"),
-    lang: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(
         None, "--lang", "-l", help="Programming language"
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Repository root path"
     ),
     context_lines: int = typer.Option(
@@ -352,16 +352,16 @@ def completions(
         ..., "--file-path", "-f", help="Relative path to the file"
     ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(
+    column: int | None = typer.Option(
         None, "--column", "-c", help="Column number (0-indexed)"
     ),
-    symbol: Optional[str] = typer.Option(
+    symbol: str | None = typer.Option(
         None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
     ),
-    lang: Optional[str] = typer.Option(
+    lang: str | None = typer.Option(
         None, "--lang", "-l", help="Programming language"
     ),
-    repo_path: Optional[str] = typer.Option(
+    repo_path: str | None = typer.Option(
         None, "--repo-path", "-r", help="Repository root path"
     ),
     allow_incomplete: bool = typer.Option(
@@ -410,7 +410,7 @@ def batch(
         "-f",
         help='Path to JSON file containing array of queries. E.g. [{"command": "definition", "file_path": "...", "line": 10, "symbol": "foo"}]',
     ),
-    context: Optional[int] = typer.Option(
+    context: int | None = typer.Option(
         None, "--context", help="Override default context lines for all queries"
     ),
     dry_run: bool = typer.Option(

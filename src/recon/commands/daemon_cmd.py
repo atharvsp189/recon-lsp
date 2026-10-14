@@ -9,20 +9,17 @@ Commands:
 """
 
 import typer
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from recon.lsp.client import (
+    dispatch_request,
     is_daemon_alive,
     spawn_daemon,
     wait_for_daemon_socket,
-    dispatch_request,
-    get_daemon_dir,
-    get_log_file,
 )
-from recon.lsp.output import print_success, print_error, print_info, print_json
+from recon.lsp.output import print_error, print_info, print_success
 
 console = Console()
 

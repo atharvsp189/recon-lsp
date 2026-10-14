@@ -1,10 +1,10 @@
 import json
-from unittest.mock import MagicMock
 from pathlib import Path
-import pytest
+from unittest.mock import MagicMock
+
 from typer.testing import CliRunner
 
-from recon.main import app, version_callback
+from recon.main import app
 
 
 def test_version_flag(runner):

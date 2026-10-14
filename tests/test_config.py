@@ -1,20 +1,19 @@
-import os
-import toml
 from pathlib import Path
-import pytest
+
+import toml
 
 from recon.config import (
+    LANGUAGE_SERVERS,
+    SUPPORTED_LANGUAGES,
+    ReconConfig,
+    _load_toml,
+    _save_toml,
     get_global_config_dir,
     get_global_config_path,
     get_project_config_path,
-    _load_toml,
-    _save_toml,
-    SUPPORTED_LANGUAGES,
-    LANGUAGE_SERVERS,
-    ReconConfig,
     load_config,
-    save_project_config,
     save_global_config,
+    save_project_config,
 )
 
 

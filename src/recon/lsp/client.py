@@ -17,8 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Platform-aware daemon directory & socket paths

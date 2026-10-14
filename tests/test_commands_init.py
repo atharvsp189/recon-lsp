@@ -1,10 +1,6 @@
-from unittest.mock import MagicMock
-from pathlib import Path
-import pytest
-from typer.testing import CliRunner
 
-from recon.commands.init_cmd import app, _display_languages
-from recon.config import save_project_config, ReconConfig, load_config
+from recon.commands.init_cmd import _display_languages, app
+from recon.config import ReconConfig, load_config, save_project_config
 
 
 def test_display_languages(capsys):

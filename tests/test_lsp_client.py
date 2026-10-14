@@ -4,31 +4,31 @@ import socket
 import struct
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from recon.lsp.client import (
+    _direct_lsp_request,
+    _handle_setup_error,
+    _json_default,
+    _recvall,
+    connect_to_daemon,
+    dispatch_lsp_request,
+    dispatch_request,
     get_daemon_dir,
+    get_daemon_python_executable,
+    get_log_file,
     get_pid_file,
     get_port_file,
     get_sock_file,
-    get_log_file,
-    _json_default,
-    send_frame,
-    recv_frame,
-    _recvall,
     is_daemon_alive,
-    try_claim_daemon_pid,
+    recv_frame,
     release_daemon_pid,
-    connect_to_daemon,
-    wait_for_daemon_socket,
-    get_daemon_python_executable,
+    send_frame,
     spawn_daemon,
-    _handle_setup_error,
-    dispatch_request,
-    dispatch_lsp_request,
-    _direct_lsp_request,
+    try_claim_daemon_pid,
+    wait_for_daemon_socket,
 )
 
 

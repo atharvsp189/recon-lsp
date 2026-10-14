@@ -2,11 +2,10 @@
 utils.py — Shared helpers for recon CLI.
 """
 
-import json
 import dataclasses
+import json
 from pathlib import Path
-from typing import Any, List, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # JSON encoder that handles dataclasses
@@ -29,8 +28,8 @@ def resolve_column(
     repo_path: str,
     file_path: str,
     line: int,
-    column: Optional[int],
-    symbol: Optional[str],
+    column: int | None,
+    symbol: str | None,
 ) -> tuple[int, int]:
     """
     Resolve a line and column number from either an explicit column or a symbol name.
@@ -72,8 +71,8 @@ def resolve_column(
 
 def uri_to_path(uri: str) -> str:
     """Convert an LSP file:// URI to a cross-platform local path."""
-    import urllib.parse
     import os
+    import urllib.parse
     from urllib.request import url2pathname
 
     parsed_path = urllib.parse.urlparse(uri).path
@@ -89,7 +88,7 @@ def uri_to_path(uri: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def add_context_to_locations(locations: List[dict], context_lines: int) -> List[dict]:
+def add_context_to_locations(locations: list[dict], context_lines: int) -> list[dict]:
     """Enrich LSP location results with surrounding source code lines."""
     if context_lines <= 0:
         return locations

@@ -1,20 +1,17 @@
 import json
 import shutil
-import sys
-from unittest.mock import MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock
+
 import pytest
-from typer.testing import CliRunner
 
 from recon.commands.setup_cmd import (
     app,
-    setup,
     check_prerequisites,
     check_server_binary,
-    verify_server_probe,
     install_server,
-    _show_all_languages_diagnostics,
-    LANGUAGE_METADATA,
+    setup,
+    verify_server_probe,
 )
 
 

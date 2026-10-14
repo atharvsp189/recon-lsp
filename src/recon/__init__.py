@@ -7,9 +7,9 @@ built on top of multilspy.
 
 __version__ = "0.1.0"
 
+import asyncio
 import os
 import sys
-import asyncio
 import threading
 from contextlib import contextmanager
 from pathlib import Path
