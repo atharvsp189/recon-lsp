@@ -59,15 +59,21 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
         "auto_download": True,
         "install_cmd": None,
         "manual_guide": "macOS: brew install jdtls\n"
-                        "Ubuntu/Debian: sudo apt install jdtls\n"
-                        "Windows/Other: Download from https://projects.eclipse.org/projects/eclipse.jdt.ls",
+        "Ubuntu/Debian: sudo apt install jdtls\n"
+        "Windows/Other: Download from https://projects.eclipse.org/projects/eclipse.jdt.ls",
         "binary_names": [],
     },
     "typescript": {
         "server": "typescript-language-server",
         "prereqs": ["node", "npm"],
         "auto_download": True,
-        "install_cmd": ["npm", "install", "-g", "typescript-language-server", "typescript"],
+        "install_cmd": [
+            "npm",
+            "install",
+            "-g",
+            "typescript-language-server",
+            "typescript",
+        ],
         "manual_guide": "Run: npm install -g typescript-language-server typescript",
         "binary_names": ["typescript-language-server"],
     },
@@ -94,7 +100,7 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
         "auto_download": True,
         "install_cmd": None,
         "manual_guide": "Download OmniSharp from https://github.com/OmniSharp/omnisharp-roslyn/releases\n"
-                        "Or use csharp-ls: dotnet tool install -g csharp-ls",
+        "Or use csharp-ls: dotnet tool install -g csharp-ls",
         "binary_names": ["OmniSharp"],
     },
     "cpp": {
@@ -103,10 +109,10 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
         "auto_download": False,
         "install_cmd": None,
         "manual_guide": "Ubuntu/Debian: sudo apt install clangd\n"
-                        "macOS: brew install llvm\n"
-                        "Windows: winget install LLVM.LLVM\n"
-                        "Arch: sudo pacman -S clang\n"
-                        "Fedora: sudo dnf install clang-tools-extra",
+        "macOS: brew install llvm\n"
+        "Windows: winget install LLVM.LLVM\n"
+        "Arch: sudo pacman -S clang\n"
+        "Fedora: sudo dnf install clang-tools-extra",
         "binary_names": ["clangd"],
     },
     "dart": {
@@ -132,7 +138,7 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
         "auto_download": True,
         "install_cmd": None,
         "manual_guide": "Download release from https://github.com/elixir-lsp/elixir-ls/releases\n"
-                        "Or build from source: mix compile && mix elixir_ls.release",
+        "Or build from source: mix compile && mix elixir_ls.release",
         "binary_names": [],
     },
     "kotlin": {
@@ -142,7 +148,7 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
         "auto_download": True,
         "install_cmd": None,
         "manual_guide": "macOS: brew install kotlin-language-server\n"
-                        "Other: Download release from https://github.com/fwcd/kotlin-language-server/releases",
+        "Other: Download release from https://github.com/fwcd/kotlin-language-server/releases",
         "binary_names": [],
     },
 }
@@ -151,6 +157,7 @@ LANGUAGE_METADATA: Dict[str, Dict[str, Any]] = {
 # ---------------------------------------------------------------------------
 # Diagnostics & Check Helpers
 # ---------------------------------------------------------------------------
+
 
 def check_prerequisites(language: str) -> Tuple[bool, List[str], List[str]]:
     """
@@ -201,6 +208,7 @@ def check_server_binary(language: str) -> Tuple[bool, Optional[str]]:
     if language == "python":
         try:
             import jedi_language_server  # noqa
+
             return True, "python module (jedi_language_server)"
         except ImportError:
             pass
@@ -208,7 +216,9 @@ def check_server_binary(language: str) -> Tuple[bool, Optional[str]]:
     return False, None
 
 
-def verify_server_probe(language: str, repo_path: Optional[str] = None) -> Tuple[bool, str]:
+def verify_server_probe(
+    language: str, repo_path: Optional[str] = None
+) -> Tuple[bool, str]:
     """
     Boot the language server via multilspy for a fast probe test.
     """
@@ -220,9 +230,14 @@ def verify_server_probe(language: str, repo_path: Optional[str] = None) -> Tuple
 
         config = MultilspyConfig.from_dict({"code_language": language})
         logger = MultilspyLogger()
-        lsp = SyncLanguageServer.create(config, logger, str(Path(test_dir).resolve()), timeout=15)
+        lsp = SyncLanguageServer.create(
+            config, logger, str(Path(test_dir).resolve()), timeout=15
+        )
         with lsp.start_server():
-            return True, "Server started and responded to initialize handshake successfully."
+            return (
+                True,
+                "Server started and responded to initialize handshake successfully.",
+            )
     except Exception as e:
         return False, str(e)
 
@@ -230,6 +245,7 @@ def verify_server_probe(language: str, repo_path: Optional[str] = None) -> Tuple
 # ---------------------------------------------------------------------------
 # Installation Logic
 # ---------------------------------------------------------------------------
+
 
 def install_server(language: str, repo_path: Optional[str] = None) -> Tuple[bool, str]:
     """
@@ -239,12 +255,15 @@ def install_server(language: str, repo_path: Optional[str] = None) -> Tuple[bool
     has_prereqs, found, missing = check_prerequisites(language)
 
     if not has_prereqs:
-        return False, f"Missing system prerequisite tools: {', '.join(missing)}. Please install them first."
+        return (
+            False,
+            f"Missing system prerequisite tools: {', '.join(missing)}. Please install them first.",
+        )
 
     install_cmd = meta.get("install_cmd")
     auto_download = meta.get("auto_download", False)
 
-    # TODO: Automated installation disabled for MVP. 
+    # TODO: Automated installation disabled for MVP.
     # Enable this in a future release once cross-platform permissions and multilspy downloads are bulletproof.
     # if install_cmd:
     #     console.print(f"  [dim]Running installation:[/dim] [cyan]{' '.join(install_cmd)}[/cyan]")
@@ -271,12 +290,16 @@ def install_server(language: str, repo_path: Optional[str] = None) -> Tuple[bool
     #     else:
     #         return False, f"Automatic download/initialization failed: {msg}"
 
-    return False, f"Automated installation is currently disabled. Please follow the manual instructions:\n\n{meta.get('manual_guide', '')}"
+    return (
+        False,
+        f"Automated installation is currently disabled. Please follow the manual instructions:\n\n{meta.get('manual_guide', '')}",
+    )
 
 
 # ---------------------------------------------------------------------------
 # CLI Command
 # ---------------------------------------------------------------------------
+
 
 @app.callback(invoke_without_command=True)
 def setup(
@@ -285,19 +308,27 @@ def setup(
         help="Language to diagnose, install, or verify (e.g., python, rust, typescript, go)",
     ),
     install: bool = typer.Option(
-        False, "--install", "-i",
+        False,
+        "--install",
+        "-i",
         help="Automatically install/download the language server",
     ),
     verify_only: bool = typer.Option(
-        False, "--verify", "-v",
+        False,
+        "--verify",
+        "-v",
         help="Run verification probe only (clean exit code)",
     ),
     repo_path: Optional[str] = typer.Option(
-        None, "--repo-path", "-r",
+        None,
+        "--repo-path",
+        "-r",
         help="Repository path for verification test",
     ),
     as_json: bool = typer.Option(
-        False, "--json", "-j",
+        False,
+        "--json",
+        "-j",
         help="Output diagnostics as structured JSON",
     ),
 ):
@@ -313,7 +344,9 @@ def setup(
 
     language = language.lower()
     if language not in SUPPORTED_LANGUAGES:
-        print_error(f"Unknown language '{language}'. Supported: {', '.join(SUPPORTED_LANGUAGES)}")
+        print_error(
+            f"Unknown language '{language}'. Supported: {', '.join(SUPPORTED_LANGUAGES)}"
+        )
         raise typer.Exit(code=1)
 
     meta = LANGUAGE_METADATA.get(language, {})
@@ -358,20 +391,24 @@ def setup(
         return
 
     # 3. Interactive / Full diagnosis & install mode
-    console.print(Panel(
-        f"[bold cyan]Language:[/bold cyan]       {language}\n"
-        f"[bold cyan]Language Server:[/bold cyan] [green]{server_name}[/green]\n"
-        f"[bold cyan]Prerequisites:[/bold cyan]   {', '.join(found_prereqs) if found_prereqs else 'none'} "
-        f"{'([red]missing: ' + ', '.join(missing_prereqs) + '[/red])' if missing_prereqs else '[green]✓ all met[/green]'}\n"
-        f"[bold cyan]Binary Status:[/bold cyan]   {'[green]✓ Found[/green]' if has_bin else '[yellow]Not detected in PATH[/yellow]'}\n"
-        f"[bold cyan]Auto-Download:[/bold cyan]   {'[green]Yes (via multilspy)[/green]' if meta.get('auto_download') else 'No (requires package manager)'}",
-        title=f"Language Server Diagnostics: {language.upper()}",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold cyan]Language:[/bold cyan]       {language}\n"
+            f"[bold cyan]Language Server:[/bold cyan] [green]{server_name}[/green]\n"
+            f"[bold cyan]Prerequisites:[/bold cyan]   {', '.join(found_prereqs) if found_prereqs else 'none'} "
+            f"{'([red]missing: ' + ', '.join(missing_prereqs) + '[/red])' if missing_prereqs else '[green]✓ all met[/green]'}\n"
+            f"[bold cyan]Binary Status:[/bold cyan]   {'[green]✓ Found[/green]' if has_bin else '[yellow]Not detected in PATH[/yellow]'}\n"
+            f"[bold cyan]Auto-Download:[/bold cyan]   {'[green]Yes (via multilspy)[/green]' if meta.get('auto_download') else 'No (requires package manager)'}",
+            title=f"Language Server Diagnostics: {language.upper()}",
+            border_style="cyan",
+        )
+    )
 
     # Install requested or missing binary
     if install:
-        console.print(f"\n[bold blue]Starting installation for {server_name}...[/bold blue]")
+        console.print(
+            f"\n[bold blue]Starting installation for {server_name}...[/bold blue]"
+        )
         ok, msg = install_server(language, repo_path)
         if ok:
             print_success(f"Installation completed: {msg}")
@@ -386,7 +423,7 @@ def setup(
         print_success(f"Language server '{server_name}' is fully operational!")
     else:
         console.print(f"[yellow]⚠Server probe failed:[/yellow] {probe_msg}")
-        
+
         # TODO: Automated installation is disabled for the MVP release.
         # if not install and (meta.get("install_cmd") or meta.get("auto_download")):
         #     if Confirm.ask("\nWould you like to run automated installation now?", default=True):
@@ -402,7 +439,9 @@ def setup(
         #         else:
         #             print_error(f"Installation failed: {msg}")
         # else:
-        console.print(f"\n[bold]Manual installation instructions:[/bold]\n  {meta.get('manual_guide')}")
+        console.print(
+            f"\n[bold]Manual installation instructions:[/bold]\n  {meta.get('manual_guide')}"
+        )
 
 
 def _show_all_languages_diagnostics(as_json: bool = False) -> None:
@@ -427,16 +466,18 @@ def _show_all_languages_diagnostics(as_json: bool = False) -> None:
             status = "[yellow]⚠ Server missing[/yellow]"
             action = f"Manual install"
 
-        records.append({
-            "language": lang,
-            "server": meta.get("server", "unknown"),
-            "status_label": status,
-            "prerequisites_met": has_prereqs,
-            "missing_prereqs": missing,
-            "binary_detected": has_bin,
-            "action": action,
-            "install_guide": meta.get("manual_guide", "").split("\n")[0],
-        })
+        records.append(
+            {
+                "language": lang,
+                "server": meta.get("server", "unknown"),
+                "status_label": status,
+                "prerequisites_met": has_prereqs,
+                "missing_prereqs": missing,
+                "binary_detected": has_bin,
+                "action": action,
+                "install_guide": meta.get("manual_guide", "").split("\n")[0],
+            }
+        )
 
     if as_json:
         print_json(records)

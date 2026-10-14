@@ -12,6 +12,7 @@ from typing import Any, List, Optional
 # JSON encoder that handles dataclasses
 # ---------------------------------------------------------------------------
 
+
 class ReconJSONEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
         if dataclasses.is_dataclass(o):
@@ -22,6 +23,7 @@ class ReconJSONEncoder(json.JSONEncoder):
 # ---------------------------------------------------------------------------
 # Column resolution from symbol name
 # ---------------------------------------------------------------------------
+
 
 def resolve_column(
     repo_path: str,
@@ -44,7 +46,7 @@ def resolve_column(
     try:
         with open(full_path, "r", encoding="utf-8") as f:
             lines = f.read().splitlines()
-        
+
         # Fuzzy search ±2 lines
         search_offsets = [0, 1, -1, 2, -2]
         for offset in search_offsets:
@@ -54,7 +56,9 @@ def resolve_column(
                 if col != -1:
                     return test_line, col
 
-        raise ValueError(f"Symbol '{symbol}' not found on or around line {line + 1} (1-indexed).")
+        raise ValueError(
+            f"Symbol '{symbol}' not found on or around line {line + 1} (1-indexed)."
+        )
     except ValueError:
         raise
     except Exception as e:
@@ -65,11 +69,13 @@ def resolve_column(
 # Cross-platform URI parsing
 # ---------------------------------------------------------------------------
 
+
 def uri_to_path(uri: str) -> str:
     """Convert an LSP file:// URI to a cross-platform local path."""
     import urllib.parse
     import os
     from urllib.request import url2pathname
+
     parsed_path = urllib.parse.urlparse(uri).path
     raw_path = url2pathname(parsed_path)
     try:
@@ -81,6 +87,7 @@ def uri_to_path(uri: str) -> str:
 # ---------------------------------------------------------------------------
 # Context fetching — adds surrounding source lines to LSP locations
 # ---------------------------------------------------------------------------
+
 
 def add_context_to_locations(locations: List[dict], context_lines: int) -> List[dict]:
     """Enrich LSP location results with surrounding source code lines."""

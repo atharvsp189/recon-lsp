@@ -18,6 +18,7 @@ from typing import Any, Optional
 # Paths
 # ---------------------------------------------------------------------------
 
+
 def get_global_config_dir() -> Path:
     """XDG-compliant global config directory."""
     xdg = os.environ.get("XDG_CONFIG_HOME", "")
@@ -42,6 +43,7 @@ def get_project_config_path(repo_path: Optional[str] = None) -> Path:
 # ---------------------------------------------------------------------------
 # TOML I/O
 # ---------------------------------------------------------------------------
+
 
 def _load_toml(path: Path) -> dict:
     if path.exists():
@@ -96,6 +98,7 @@ LANGUAGE_SERVERS = {
 # ---------------------------------------------------------------------------
 # Merged configuration
 # ---------------------------------------------------------------------------
+
 
 class ReconConfig:
     """

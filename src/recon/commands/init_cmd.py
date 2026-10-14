@@ -56,15 +56,20 @@ def _display_languages() -> None:
 @app.callback(invoke_without_command=True)
 def init(
     repo_path: Optional[str] = typer.Option(
-        None, "--repo-path", "-r",
+        None,
+        "--repo-path",
+        "-r",
         help="Repository path (defaults to current directory)",
     ),
     language: Optional[str] = typer.Option(
-        None, "--lang", "-l",
+        None,
+        "--lang",
+        "-l",
         help="Skip interactive prompt and set language directly",
     ),
     skip_verify: bool = typer.Option(
-        False, "--skip-verify",
+        False,
+        "--skip-verify",
         help="Skip language server verification",
     ),
 ):
@@ -74,11 +79,13 @@ def init(
     Sets up a .recon.toml config file and verifies/installs
     the language server.
     """
-    console.print(Panel(
-        "[bold blue]Recon — Code Reconnaissance Setup[/bold blue]\n\n"
-        "This wizard will configure recon for your project.",
-        border_style="blue",
-    ))
+    console.print(
+        Panel(
+            "[bold blue]Recon — Code Reconnaissance Setup[/bold blue]\n\n"
+            "This wizard will configure recon for your project.",
+            border_style="blue",
+        )
+    )
 
     # 1. Resolve repo path
     if repo_path is None:
@@ -139,13 +146,18 @@ def init(
         if ok:
             print_success(f"Language server '{server}' is verified and ready!")
         else:
-            console.print(f"\n [yellow]⚠Language server verification probe reported:[/yellow] {msg}")
-            
+            console.print(
+                f"\n [yellow]⚠Language server verification probe reported:[/yellow] {msg}"
+            )
+
             # TODO: Automated installation is disabled for the MVP release.
             from recon.commands.setup_cmd import LANGUAGE_METADATA
+
             meta = LANGUAGE_METADATA.get(language, {})
-            console.print(f"\n[bold]Automated installation is currently disabled. Please follow the manual instructions:[/bold]\n  {meta.get('manual_guide', '')}")
-            
+            console.print(
+                f"\n[bold]Automated installation is currently disabled. Please follow the manual instructions:[/bold]\n  {meta.get('manual_guide', '')}"
+            )
+
             # if Confirm.ask(f"  Would you like to install '{server}' automatically now?", default=True):
             #     inst_ok, inst_msg = install_server(language, repo_path)
             #     if inst_ok:
@@ -172,14 +184,16 @@ def init(
     print_success(f"Configuration saved")
 
     # 5. Show next steps
-    console.print(Panel(
-        f"[bold green]Setup complete![/bold green]\n\n"
-        f"Try these commands:\n"
-        f"  [cyan]recon symbols -f <file>[/cyan]                     — List symbols in a file\n"
-        f"  [cyan]recon definition -f <file> -L <line> -s <sym>[/cyan]  — Jump to definition\n"
-        f"  [cyan]recon references -f <file> -L <line> -s <sym>[/cyan]  — Find all usages\n"
-        f"  [cyan]recon hover -f <file> -L <line> -s <sym>[/cyan]       — Docstrings & types\n"
-        f"  [cyan]recon daemon status[/cyan]                         — Check daemon status\n",
-        title="Next Steps",
-        border_style="green",
-    ))
+    console.print(
+        Panel(
+            f"[bold green]Setup complete![/bold green]\n\n"
+            f"Try these commands:\n"
+            f"  [cyan]recon symbols -f <file>[/cyan]                     — List symbols in a file\n"
+            f"  [cyan]recon definition -f <file> -L <line> -s <sym>[/cyan]  — Jump to definition\n"
+            f"  [cyan]recon references -f <file> -L <line> -s <sym>[/cyan]  — Find all usages\n"
+            f"  [cyan]recon hover -f <file> -L <line> -s <sym>[/cyan]       — Docstrings & types\n"
+            f"  [cyan]recon daemon status[/cyan]                         — Check daemon status\n",
+            title="Next Steps",
+            border_style="green",
+        )
+    )

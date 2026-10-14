@@ -8,9 +8,11 @@ import pytest
 import recon
 from recon import _patched_start_server
 
+
 def test_version_string():
     assert isinstance(recon.__version__, str)
     assert len(recon.__version__.split(".")) >= 2
+
 
 def test_path_injection(monkeypatch):
     test_bin = "/fake/custom/bin"
@@ -22,10 +24,11 @@ def test_path_injection(monkeypatch):
         paths_to_add.append(test_bin)
     if test_exe not in current_path:
         paths_to_add.append(test_exe)
-    
+
     new_path = os.pathsep.join(paths_to_add + [current_path])
     assert test_bin in new_path
     assert test_exe in new_path
+
 
 def test_patched_start_server_success():
     class DummyLangServer:
@@ -36,8 +39,10 @@ def test_patched_start_server_success():
             class DummyCtx:
                 async def __aenter__(self):
                     return self
+
                 async def __aexit__(self, exc_type, exc, tb):
                     return None
+
             return DummyCtx()
 
     class DummySyncServer:
@@ -58,8 +63,10 @@ def test_patched_start_server_exception_on_enter():
             class FailingCtx:
                 async def __aenter__(self):
                     raise ValueError("Connection aborted")
+
                 async def __aexit__(self, exc_type, exc, tb):
                     return None
+
             return FailingCtx()
 
     class DummySyncServer:
@@ -73,14 +80,17 @@ def test_patched_start_server_exception_on_enter():
         with _patched_start_server(sync_server):
             pass
 
+
 def test_patched_start_server_exception_on_exit():
     class FailingExitLangServer:
         def start_server(self):
             class FailingExitCtx:
                 async def __aenter__(self):
                     return self
+
                 async def __aexit__(self, exc_type, exc, tb):
                     raise RuntimeError("Exit error")
+
             return FailingExitCtx()
 
     class DummySyncServer:

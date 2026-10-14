@@ -3,6 +3,7 @@ from typer.testing import CliRunner
 from recon.commands.info_cmd import app, info
 from recon.config import save_project_config, save_global_config, ReconConfig
 
+
 def test_info_command_defaults(runner, isolated_env):
     res = runner.invoke(app, [])
     assert res.exit_code == 0
@@ -12,7 +13,10 @@ def test_info_command_defaults(runner, isolated_env):
     assert "stopped" in res.output
     assert "Project: ✗ not found" in res.output
 
-def test_info_command_with_configs_and_running_daemon(runner, isolated_env, tmp_path, monkeypatch):
+
+def test_info_command_with_configs_and_running_daemon(
+    runner, isolated_env, tmp_path, monkeypatch
+):
     repo_dir = tmp_path / "repo"
     repo_dir.mkdir()
 

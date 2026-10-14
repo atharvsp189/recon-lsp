@@ -43,7 +43,13 @@ from recon.commands.setup_cmd import setup
 from recon.commands.daemon_cmd import app as daemon_app
 from recon.commands.info_cmd import info
 from recon.commands.query import (
-    definition, references, hover, symbols, workspace_symbols, completions, batch,
+    definition,
+    references,
+    hover,
+    symbols,
+    workspace_symbols,
+    completions,
+    batch,
 )
 
 console = Console()
@@ -62,9 +68,11 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+
 def version_callback(value: bool):
     if value:
         from importlib.metadata import version, PackageNotFoundError
+
         try:
             ver = version("recon-lsp")
         except PackageNotFoundError:
@@ -72,20 +80,29 @@ def version_callback(value: bool):
         console.print(f"Recon LSP Version: [bold cyan]{ver}[/bold cyan]")
         raise typer.Exit()
 
+
 @app.callback()
 def main(
     version: Optional[bool] = typer.Option(
-        None, "--version", "-v", callback=version_callback, is_eager=True, help="Show the version and exit."
-    )
+        None,
+        "--version",
+        "-v",
+        callback=version_callback,
+        is_eager=True,
+        help="Show the version and exit.",
+    ),
 ):
     pass
+
 
 # ---------------------------------------------------------------------------
 # Register core commands
 # ---------------------------------------------------------------------------
 
 # `recon init` — interactive setup wizard
-app.command("init", help="Initialize a new recon project with interactive wizard.")(init)
+app.command("init", help="Initialize a new recon project with interactive wizard.")(
+    init
+)
 
 # `recon setup` — language server diagnostics, installer, and verification
 app.command("setup", help="Diagnose, install, or verify language servers.")(setup)
@@ -93,7 +110,10 @@ app.command("setup", help="Diagnose, install, or verify language servers.")(setu
 # `recon info` — project info display
 app.command("info", help="Show project info, daemon status, and config paths.")(info)
 
-@app.command("agent-skill", help="Print the recon-skills reconnaissance workflow for AI agents.")
+
+@app.command(
+    "agent-skill", help="Print the recon-skills reconnaissance workflow for AI agents."
+)
 def agent_skill():
     """Print the recon-skills skill: a structured rg + recon workflow for codebase reconnaissance."""
     from rich.markdown import Markdown
@@ -116,6 +136,7 @@ def agent_skill():
 
     console.print(Markdown(instructions))
 
+
 # `recon daemon start|stop|status|restart` — daemon lifecycle subgroup
 app.add_typer(daemon_app, name="daemon")
 
@@ -124,11 +145,23 @@ app.add_typer(daemon_app, name="daemon")
 # LSP query commands — registered directly on root app for flat access
 # ---------------------------------------------------------------------------
 
-app.command("definition", help="Find the definition of a symbol at the given location.")(definition)
-app.command("references", help="Find all references to a symbol at the given location.")(references)
-app.command("hover", help="Get hover information (docs, types, signatures) at the given location.")(hover)
-app.command("symbols", help="Get all symbols (classes, functions, variables) in a file.")(symbols)
-app.command("workspace-symbols", help="Find symbols across the whole workspace matching a query.")(workspace_symbols)
+app.command(
+    "definition", help="Find the definition of a symbol at the given location."
+)(definition)
+app.command(
+    "references", help="Find all references to a symbol at the given location."
+)(references)
+app.command(
+    "hover",
+    help="Get hover information (docs, types, signatures) at the given location.",
+)(hover)
+app.command(
+    "symbols", help="Get all symbols (classes, functions, variables) in a file."
+)(symbols)
+app.command(
+    "workspace-symbols",
+    help="Find symbols across the whole workspace matching a query.",
+)(workspace_symbols)
 app.command("completions", help="Get completions at the given location.")(completions)
 app.command("batch", help="Run multiple LSP queries from a JSON file in one go.")(batch)
 
@@ -137,12 +170,17 @@ app.command("batch", help="Run multiple LSP queries from a JSON file in one go."
 # Config command (simple, on root)
 # ---------------------------------------------------------------------------
 
+
 @app.command("config", help="View or set configuration defaults.")
 def config(
     lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Default language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Default repo path"),
+    repo_path: Optional[str] = typer.Option(
+        None, "--repo-path", "-r", help="Default repo path"
+    ),
     show: bool = typer.Option(False, "--show", help="Show current config"),
-    set_global: bool = typer.Option(False, "--global", "-g", help="Set global defaults instead of project"),
+    set_global: bool = typer.Option(
+        False, "--global", "-g", help="Set global defaults instead of project"
+    ),
 ):
     """View or set configuration defaults."""
     if show:

@@ -11,12 +11,14 @@ from recon.lsp.output import (
     print_info,
 )
 
+
 def test_print_json(capsys):
     data = {"key": "value", "count": 10}
     print_json(data)
     captured = capsys.readouterr()
     parsed = json.loads(captured.out)
     assert parsed == data
+
 
 def test_print_human_with_locations_and_context(capsys):
     data = [
@@ -47,12 +49,14 @@ def test_print_human_with_locations_and_context(capsys):
     assert "other.py:6" in captured.out
     assert "unknown:?" in captured.out
 
+
 def test_print_human_list_non_locations(capsys):
     data = [{"raw_field": 123}, {"another": True}]
     print_human(data)
     captured = capsys.readouterr()
     assert "raw_field" in captured.out
     assert "123" in captured.out
+
 
 def test_print_human_dict_and_string(capsys):
     dict_data = {"Language": "python", "Daemon": "running"}
@@ -65,10 +69,12 @@ def test_print_human_dict_and_string(capsys):
     captured = capsys.readouterr()
     assert "Simple text message" in captured.out
 
+
 def test_print_human_fallback_primitive(capsys):
     print_human(12345)
     captured = capsys.readouterr()
     assert "12345" in captured.out
+
 
 def test_print_table_empty_or_non_list(capsys):
     print_table([])
@@ -78,6 +84,7 @@ def test_print_table_empty_or_non_list(capsys):
     print_table({"not": "a list"})
     captured = capsys.readouterr()
     assert '"not": "a list"' in captured.out
+
 
 def test_print_table_list_of_dicts(capsys):
     data = [
@@ -103,6 +110,7 @@ def test_print_table_list_of_dicts(capsys):
     assert "function" in captured.out
     assert "should be omitted from columns" not in captured.out
 
+
 def test_print_table_list_of_primitives(capsys):
     data = ["item 1", "item 2", "item 3"]
     print_table(data, title="Simple List")
@@ -110,11 +118,19 @@ def test_print_table_list_of_primitives(capsys):
     assert "item 1" in captured.out
     assert "item 2" in captured.out
 
+
 def test_print_output_dispatch(monkeypatch):
     calls = []
-    monkeypatch.setattr("recon.lsp.output.print_human", lambda d: calls.append(("human", d)))
-    monkeypatch.setattr("recon.lsp.output.print_table", lambda d, title: calls.append(("table", d, title)))
-    monkeypatch.setattr("recon.lsp.output.print_json", lambda d: calls.append(("json", d)))
+    monkeypatch.setattr(
+        "recon.lsp.output.print_human", lambda d: calls.append(("human", d))
+    )
+    monkeypatch.setattr(
+        "recon.lsp.output.print_table",
+        lambda d, title: calls.append(("table", d, title)),
+    )
+    monkeypatch.setattr(
+        "recon.lsp.output.print_json", lambda d: calls.append(("json", d))
+    )
 
     print_output({"test": 1}, fmt="human")
     assert calls[-1] == ("human", {"test": 1})
@@ -127,6 +143,7 @@ def test_print_output_dispatch(monkeypatch):
 
     print_output({"test": 4}, fmt="unknown_fallback")
     assert calls[-1] == ("json", {"test": 4})
+
 
 def test_print_status_helpers(capsys):
     print_error("Failed to connect")
