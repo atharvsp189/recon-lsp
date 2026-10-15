@@ -189,3 +189,52 @@ Since `recon` leverages real Language Servers, it expects your project to be in 
 * **Elixir**: Requires Elixir 1.13+ and Erlang 24+. Run `mix deps.get` to fetch dependencies for `elixir-ls`.
 * **Kotlin**: Requires Java 11+. Ensure your Gradle/Maven wrappers are functional and dependencies are synced.
 * **Dart**: Run `dart pub get` or `flutter pub get` to resolve packages for the built-in Dart analysis server.
+
+---
+
+## Contributing
+
+Contributions to Recon are warmly welcomed! Whether you want to report an issue, improve documentation, optimize performance, or add support for additional language servers, we appreciate your help.
+
+### Getting Started
+
+1. **Fork and clone the repository**:
+   ```bash
+   git clone https://github.com/atharvsp189/recon-lsp.git
+   cd recon-lsp
+   ```
+
+2. **Set up the development environment**:
+   Make sure you have [uv](https://docs.astral.sh/uv/) installed.
+   ```bash
+   make install
+   # or directly with uv:
+   uv sync
+   ```
+
+3. **Run the test suite**:
+   ```bash
+   make test        # Run tests with coverage report
+   make test-fast   # Fast run without coverage
+   ```
+
+4. **Code style & quality**:
+   We use [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+   ```bash
+   make lint        # Check for lint violations
+   make format      # Auto-format code
+   make check       # Run lint, format check, and tests
+   ```
+
+5. **Submitting changes**:
+   - Create a feature branch (`git checkout -b feature/your-feature-name` or `fix/your-bug-fix`).
+   - Write clear, concise commit messages.
+   - Ensure all tests pass before submitting (`make test`).
+   - Open a Pull Request against the `develop` branch with a clear description of your changes.
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+

@@ -1,6 +1,6 @@
 [project]
 name = "recon-lsp"
-version = "0.1.0"
+version = "0.2.0"
 description = "LSP-powered code reconnaissance CLI — semantic code intelligence for AI agents and humans."
 readme = "README.md"
 authors = [
