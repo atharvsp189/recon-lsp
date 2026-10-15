@@ -2,23 +2,18 @@
 info_cmd.py — Display project info, config, and supported languages.
 """
 
-import typer
-from pathlib import Path
-from typing import Optional
 
+import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 
 from recon import __version__
 from recon.config import (
-    load_config,
-    get_project_config_path,
     get_global_config_path,
-    SUPPORTED_LANGUAGES,
-    LANGUAGE_SERVERS,
+    get_project_config_path,
+    load_config,
 )
-from recon.lsp.client import is_daemon_alive, get_daemon_dir, get_log_file
+from recon.lsp.client import is_daemon_alive
 
 console = Console()
 
@@ -27,8 +22,10 @@ app = typer.Typer(help="Show project info and status.")
 
 @app.callback(invoke_without_command=True)
 def info(
-    repo_path: Optional[str] = typer.Option(
-        None, "--repo-path", "-r",
+    repo_path: str | None = typer.Option(
+        None,
+        "--repo-path",
+        "-r",
         help="Repository path",
     ),
 ):
@@ -41,7 +38,9 @@ def info(
 
     project_status = "✓ found" if project_config.exists() else "✗ not found"
     global_status = "✓ found" if global_config.exists() else "✗ not found"
-    daemon_running = "[green]running[/green]" if is_daemon_alive() else "[yellow]stopped[/yellow]"
+    daemon_running = (
+        "[green]running[/green]" if is_daemon_alive() else "[yellow]stopped[/yellow]"
+    )
 
     info_text = (
         f"[bold]Version:[/bold]        {__version__}\n"
@@ -59,8 +58,10 @@ def info(
         f"  Request Timeout: {cfg.request_timeout}s"
     )
 
-    console.print(Panel(
-        info_text,
-        title="Recon Info",
-        border_style="blue",
-    ))
+    console.print(
+        Panel(
+            info_text,
+            title="Recon Info",
+            border_style="blue",
+        )
+    )

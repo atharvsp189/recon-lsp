@@ -11,14 +11,14 @@ Commands:
 """
 
 import json
-import typer
 from pathlib import Path
-from typing import Optional
+
+import typer
 
 from recon.config import load_config
 from recon.lsp.client import dispatch_lsp_request
-from recon.lsp.output import print_output, print_error
-from recon.utils import resolve_column, add_context_to_locations
+from recon.lsp.output import print_error, print_output
+from recon.utils import add_context_to_locations, resolve_column
 
 app = typer.Typer(help="LSP query commands for semantic code intelligence.")
 
@@ -27,10 +27,11 @@ app = typer.Typer(help="LSP query commands for semantic code intelligence.")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _resolve_env(
-    lang: Optional[str],
-    repo_path: Optional[str],
-    file_path: Optional[str] = None,
+    lang: str | None,
+    repo_path: str | None,
+    file_path: str | None = None,
 ) -> tuple[str, str]:
     """Resolve language and repo_path from CLI flags or config."""
     cfg = load_config(repo_path)
@@ -40,12 +41,23 @@ def _resolve_env(
     if not final_lang and file_path:
         ext = Path(file_path).suffix.lower()
         ext_map = {
-            ".py": "python", ".rs": "rust", ".go": "go",
-            ".ts": "typescript", ".js": "javascript",
-            ".java": "java", ".cs": "csharp",
-            ".cpp": "cpp", ".c": "cpp", ".h": "cpp", ".hpp": "cpp",
-            ".rb": "ruby", ".dart": "dart", ".php": "php",
-            ".ex": "elixir", ".exs": "elixir", ".kt": "kotlin"
+            ".py": "python",
+            ".rs": "rust",
+            ".go": "go",
+            ".ts": "typescript",
+            ".js": "javascript",
+            ".java": "java",
+            ".cs": "csharp",
+            ".cpp": "cpp",
+            ".c": "cpp",
+            ".h": "cpp",
+            ".hpp": "cpp",
+            ".rb": "ruby",
+            ".dart": "dart",
+            ".php": "php",
+            ".ex": "elixir",
+            ".exs": "elixir",
+            ".kt": "kotlin",
         }
         final_lang = ext_map.get(ext)
 
@@ -70,25 +82,48 @@ def _get_format(human: bool, table: bool, cfg_fmt: str = "json") -> str:
 # definition
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def definition(
-    file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
+    file_path: str = typer.Option(
+        ..., "--file-path", "-f", help="Relative path to the file"
+    ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
-    symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    context_lines: int = typer.Option(2, "--context", help="Surrounding lines to include"),
+    column: int | None = typer.Option(
+        None, "--column", "-c", help="Column number (0-indexed)"
+    ),
+    symbol: str | None = typer.Option(
+        None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
+    ),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Programming language"
+    ),
+    repo_path: str | None = typer.Option(
+        None, "--repo-path", "-r", help="Repository root path"
+    ),
+    context_lines: int = typer.Option(
+        2, "--context", help="Surrounding lines to include"
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Find the definition of a symbol at the given location."""
     try:
         lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
         line_0 = line - 1
         line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
-        res = dispatch_lsp_request("definition", lang_r, repo_r, no_daemon, file_path=file_path, line=line_0, col=col)
+        res = dispatch_lsp_request(
+            "definition",
+            lang_r,
+            repo_r,
+            no_daemon,
+            file_path=file_path,
+            line=line_0,
+            col=col,
+        )
         res = add_context_to_locations(res or [], context_lines)
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Definition")
@@ -103,25 +138,48 @@ def definition(
 # references
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def references(
-    file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
+    file_path: str = typer.Option(
+        ..., "--file-path", "-f", help="Relative path to the file"
+    ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
-    symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    context_lines: int = typer.Option(2, "--context", help="Surrounding lines to include"),
+    column: int | None = typer.Option(
+        None, "--column", "-c", help="Column number (0-indexed)"
+    ),
+    symbol: str | None = typer.Option(
+        None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
+    ),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Programming language"
+    ),
+    repo_path: str | None = typer.Option(
+        None, "--repo-path", "-r", help="Repository root path"
+    ),
+    context_lines: int = typer.Option(
+        2, "--context", help="Surrounding lines to include"
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Find all references to a symbol at the given location."""
     try:
         lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
         line_0 = line - 1
         line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
-        res = dispatch_lsp_request("references", lang_r, repo_r, no_daemon, file_path=file_path, line=line_0, col=col)
+        res = dispatch_lsp_request(
+            "references",
+            lang_r,
+            repo_r,
+            no_daemon,
+            file_path=file_path,
+            line=line_0,
+            col=col,
+        )
         res = add_context_to_locations(res or [], context_lines)
         fmt = _get_format(human, table)
         print_output(res, fmt, title="References")
@@ -136,23 +194,44 @@ def references(
 # hover
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def hover(
-    file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
+    file_path: str = typer.Option(
+        ..., "--file-path", "-f", help="Relative path to the file"
+    ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
-    symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
+    column: int | None = typer.Option(
+        None, "--column", "-c", help="Column number (0-indexed)"
+    ),
+    symbol: str | None = typer.Option(
+        None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
+    ),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Programming language"
+    ),
+    repo_path: str | None = typer.Option(
+        None, "--repo-path", "-r", help="Repository root path"
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Get hover information (docs, types, signatures) at the given location."""
     try:
         lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
         line_0 = line - 1
         line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
-        res = dispatch_lsp_request("hover", lang_r, repo_r, no_daemon, file_path=file_path, line=line_0, col=col)
+        res = dispatch_lsp_request(
+            "hover",
+            lang_r,
+            repo_r,
+            no_daemon,
+            file_path=file_path,
+            line=line_0,
+            col=col,
+        )
         fmt = _get_format(human, False)
         print_output(res, fmt, title="Hover")
     except typer.Exit:
@@ -166,26 +245,41 @@ def hover(
 # symbols (document symbols)
 # ---------------------------------------------------------------------------
 
-# LSP SymbolKind: File=1, Module=2, Namespace=3, Package=4, Class=5, Method=6, Property=7, Field=8, 
-# Constructor=9, Enum=10, Interface=11, Function=12, Variable=13, Constant=14, String=15, 
-# Number=16, Boolean=17, Array=18, Object=19, Key=20, Null=21, EnumMember=22, Struct=23, 
+# LSP SymbolKind: File=1, Module=2, Namespace=3, Package=4, Class=5, Method=6, Property=7, Field=8,
+# Constructor=9, Enum=10, Interface=11, Function=12, Variable=13, Constant=14, String=15,
+# Number=16, Boolean=17, Array=18, Object=19, Key=20, Null=21, EnumMember=22, Struct=23,
 # Event=24, Operator=25, TypeParameter=26
 NON_DECLARATIONS = frozenset({13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26})
 
+
 @app.command("symbols")
 def symbols(
-    file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    declarations_only: bool = typer.Option(False, "--declarations-only", help="Filter out variables, strings, and non-declarative symbols"),
+    file_path: str = typer.Option(
+        ..., "--file-path", "-f", help="Relative path to the file"
+    ),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Programming language"
+    ),
+    repo_path: str | None = typer.Option(
+        None, "--repo-path", "-r", help="Repository root path"
+    ),
+    declarations_only: bool = typer.Option(
+        False,
+        "--declarations-only",
+        help="Filter out variables, strings, and non-declarative symbols",
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Get all symbols (classes, functions, variables) in a file."""
     try:
         lang_r, repo_r = _resolve_env(lang, repo_path, file_path)
-        res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=file_path)
+        res = dispatch_lsp_request(
+            "document_symbols", lang_r, repo_r, no_daemon, file_path=file_path
+        )
         if res and isinstance(res, list):
             filtered_res = []
             for item in res:
@@ -193,7 +287,10 @@ def symbols(
                     if declarations_only and item.get("kind") in NON_DECLARATIONS:
                         continue
                     if "location" not in item:
-                        item["location"] = {"relativePath": file_path, "range": item.get("range", {})}
+                        item["location"] = {
+                            "relativePath": file_path,
+                            "range": item.get("range", {}),
+                        }
                     filtered_res.append(item)
             res = filtered_res
         fmt = _get_format(human, table)
@@ -209,20 +306,31 @@ def symbols(
 # workspace-symbols
 # ---------------------------------------------------------------------------
 
+
 @app.command("workspace-symbols")
 def workspace_symbols(
     query: str = typer.Option(..., "--query", "-q", help="Symbol name to search for"),
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    context_lines: int = typer.Option(2, "--context", help="Surrounding lines to include"),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Programming language"
+    ),
+    repo_path: str | None = typer.Option(
+        None, "--repo-path", "-r", help="Repository root path"
+    ),
+    context_lines: int = typer.Option(
+        2, "--context", help="Surrounding lines to include"
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Find symbols across the whole workspace matching a query."""
     try:
         lang_r, repo_r = _resolve_env(lang, repo_path)
-        res = dispatch_lsp_request("workspace_symbol", lang_r, repo_r, no_daemon, query=query)
+        res = dispatch_lsp_request(
+            "workspace_symbol", lang_r, repo_r, no_daemon, query=query
+        )
         res = add_context_to_locations(res or [], context_lines)
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Workspace Symbols")
@@ -237,18 +345,33 @@ def workspace_symbols(
 # completions
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def completions(
-    file_path: str = typer.Option(..., "--file-path", "-f", help="Relative path to the file"),
+    file_path: str = typer.Option(
+        ..., "--file-path", "-f", help="Relative path to the file"
+    ),
     line: int = typer.Option(..., "--line", "-L", help="Line number (1-indexed)"),
-    column: Optional[int] = typer.Option(None, "--column", "-c", help="Column number (0-indexed)"),
-    symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Symbol string (auto-calculates column)"),
-    lang: Optional[str] = typer.Option(None, "--lang", "-l", help="Programming language"),
-    repo_path: Optional[str] = typer.Option(None, "--repo-path", "-r", help="Repository root path"),
-    allow_incomplete: bool = typer.Option(True, "--allow-incomplete", help="Allow incomplete completion results"),
+    column: int | None = typer.Option(
+        None, "--column", "-c", help="Column number (0-indexed)"
+    ),
+    symbol: str | None = typer.Option(
+        None, "--symbol", "-s", help="Symbol string (auto-calculates column)"
+    ),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Programming language"
+    ),
+    repo_path: str | None = typer.Option(
+        None, "--repo-path", "-r", help="Repository root path"
+    ),
+    allow_incomplete: bool = typer.Option(
+        True, "--allow-incomplete", help="Allow incomplete completion results"
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Get completions at the given location."""
     try:
@@ -256,8 +379,14 @@ def completions(
         line_0 = line - 1
         line_0, col = resolve_column(repo_r, file_path, line_0, column, symbol)
         res = dispatch_lsp_request(
-            "completions", lang_r, repo_r, no_daemon,
-            file_path=file_path, line=line_0, col=col, allow_incomplete=allow_incomplete,
+            "completions",
+            lang_r,
+            repo_r,
+            no_daemon,
+            file_path=file_path,
+            line=line_0,
+            col=col,
+            allow_incomplete=allow_incomplete,
         )
         fmt = _get_format(human, table)
         print_output(res, fmt, title="Completions")
@@ -267,86 +396,145 @@ def completions(
         print_error(str(e))
         raise typer.Exit(code=1)
 
+
 # ---------------------------------------------------------------------------
 # batch
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def batch(
-    file: str = typer.Option(..., "--file", "-f", help="Path to JSON file containing array of queries. E.g. [{\"command\": \"definition\", \"file_path\": \"...\", \"line\": 10, \"symbol\": \"foo\"}]"),
-    context: Optional[int] = typer.Option(None, "--context", help="Override default context lines for all queries"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Parse the JSON file and print the queries without executing them"),
+    file: str = typer.Option(
+        ...,
+        "--file",
+        "-f",
+        help='Path to JSON file containing array of queries. E.g. [{"command": "definition", "file_path": "...", "line": 10, "symbol": "foo"}]',
+    ),
+    context: int | None = typer.Option(
+        None, "--context", help="Override default context lines for all queries"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Parse the JSON file and print the queries without executing them",
+    ),
     human: bool = typer.Option(False, "--human", "-H", help="Human-readable output"),
     table: bool = typer.Option(False, "--table", "-T", help="Table output"),
-    no_daemon: bool = typer.Option(False, "--no-daemon", help="Bypass daemon, boot fresh LSP"),
+    no_daemon: bool = typer.Option(
+        False, "--no-daemon", help="Bypass daemon, boot fresh LSP"
+    ),
 ):
     """Run multiple LSP queries from a JSON file in one go."""
     import time
+
     start_time = time.monotonic()
     try:
         with open(file, "r", encoding="utf-8") as f:
             queries = json.load(f)
-        
+
         if not isinstance(queries, list):
             raise ValueError("JSON file must contain an array of query objects.")
-            
+
         if dry_run:
             fmt = _get_format(human, table)
             print_output(queries, fmt, title="Dry Run Queries")
             return
-            
+
         results = []
         success_count = 0
         fail_count = 0
-        
+
         for i, q in enumerate(queries):
             cmd = q.get("command")
             if not cmd:
-                results.append({"query": q, "error": f"Query {i} missing 'command' field."})
+                results.append(
+                    {"query": q, "error": f"Query {i} missing 'command' field."}
+                )
                 fail_count += 1
                 continue
-                
+
             try:
-                lang_r, repo_r = _resolve_env(q.get("lang"), q.get("repo_path"), q.get("file_path"))
+                lang_r, repo_r = _resolve_env(
+                    q.get("lang"), q.get("repo_path"), q.get("file_path")
+                )
             except typer.Exit:
-                results.append({"query": q, "error": f"Query {i} failed to resolve environment."})
+                results.append(
+                    {"query": q, "error": f"Query {i} failed to resolve environment."}
+                )
                 fail_count += 1
                 continue
-            
+
             try:
-                ctx_lines = context if context is not None else q.get("context_lines", 2)
-                
+                ctx_lines = (
+                    context if context is not None else q.get("context_lines", 2)
+                )
+
                 if cmd in ("definition", "references", "hover", "completions"):
                     line = q.get("line")
                     if line is None:
                         raise ValueError("Missing 'line' field.")
                     line_0 = line - 1
-                    line_0, col = resolve_column(repo_r, q.get("file_path"), line_0, q.get("column"), q.get("symbol"))
-                    
+                    line_0, col = resolve_column(
+                        repo_r,
+                        q.get("file_path"),
+                        line_0,
+                        q.get("column"),
+                        q.get("symbol"),
+                    )
+
                     if cmd == "completions":
-                        res = dispatch_lsp_request(cmd, lang_r, repo_r, no_daemon, 
-                            file_path=q.get("file_path"), line=line_0, col=col, 
-                            allow_incomplete=q.get("allow_incomplete", True))
+                        res = dispatch_lsp_request(
+                            cmd,
+                            lang_r,
+                            repo_r,
+                            no_daemon,
+                            file_path=q.get("file_path"),
+                            line=line_0,
+                            col=col,
+                            allow_incomplete=q.get("allow_incomplete", True),
+                        )
                     else:
-                        res = dispatch_lsp_request(cmd, lang_r, repo_r, no_daemon, 
-                            file_path=q.get("file_path"), line=line_0, col=col)
-                        
+                        res = dispatch_lsp_request(
+                            cmd,
+                            lang_r,
+                            repo_r,
+                            no_daemon,
+                            file_path=q.get("file_path"),
+                            line=line_0,
+                            col=col,
+                        )
+
                     if cmd in ("definition", "references"):
                         res = add_context_to_locations(res or [], ctx_lines)
-                
+
                 elif cmd == "symbols":
-                    res = dispatch_lsp_request("document_symbols", lang_r, repo_r, no_daemon, file_path=q.get("file_path"))
+                    res = dispatch_lsp_request(
+                        "document_symbols",
+                        lang_r,
+                        repo_r,
+                        no_daemon,
+                        file_path=q.get("file_path"),
+                    )
                     if res and isinstance(res, list):
                         for item in res:
                             if isinstance(item, dict) and "location" not in item:
-                                item["location"] = {"relativePath": q.get("file_path"), "range": item.get("range", {})}
-                
+                                item["location"] = {
+                                    "relativePath": q.get("file_path"),
+                                    "range": item.get("range", {}),
+                                }
+
                 elif cmd == "workspace-symbols":
-                    res = dispatch_lsp_request("workspace_symbol", lang_r, repo_r, no_daemon, query=q.get("query"))
+                    res = dispatch_lsp_request(
+                        "workspace_symbol",
+                        lang_r,
+                        repo_r,
+                        no_daemon,
+                        query=q.get("query"),
+                    )
                     res = add_context_to_locations(res or [], ctx_lines)
                 else:
                     raise ValueError(f"Unknown command: {cmd}")
-                    
+
                 results.append({"query": q, "result": res})
                 success_count += 1
             except Exception as e:
@@ -359,13 +547,16 @@ def batch(
             "succeeded": success_count,
             "failed": fail_count,
             "duration_ms": round(duration, 2),
-            "results": results
+            "results": results,
         }
 
         fmt = _get_format(human, table)
         if fmt == "human" or fmt == "table":
             from recon.lsp.output import print_info
-            print_info(f"Batch completed in {envelope['duration_ms']}ms: {success_count} succeeded, {fail_count} failed.")
+
+            print_info(
+                f"Batch completed in {envelope['duration_ms']}ms: {success_count} succeeded, {fail_count} failed."
+            )
             print_output(results, fmt, title="Batch Results")
         else:
             print_output(envelope, fmt, title="Batch Results")
@@ -373,5 +564,6 @@ def batch(
         raise
     except Exception as e:
         from recon.lsp.output import print_error
+
         print_error(str(e))
         raise typer.Exit(code=1)

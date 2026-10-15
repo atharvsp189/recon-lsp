@@ -13,7 +13,6 @@ Architecture:
 """
 
 import atexit
-import json
 import logging
 import os
 import signal
@@ -23,7 +22,7 @@ import threading
 import time
 from contextlib import ExitStack
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from multilspy import SyncLanguageServer
 from multilspy.multilspy_config import MultilspyConfig
@@ -31,14 +30,12 @@ from multilspy.multilspy_logger import MultilspyLogger
 
 from recon.lsp.client import (
     _USE_UNIX_SOCKET,
-    get_daemon_dir,
-    get_pid_file,
+    get_log_file,
     get_port_file,
     get_sock_file,
-    get_log_file,
+    recv_frame,
     release_daemon_pid,
     send_frame,
-    recv_frame,
     try_claim_daemon_pid,
 )
 
@@ -47,7 +44,7 @@ from recon.lsp.client import (
 # ---------------------------------------------------------------------------
 
 IDLE_TIMEOUT_SECONDS = 15 * 60  # 15 minutes
-LSP_REQUEST_TIMEOUT = 30        # seconds per LSP call
+LSP_REQUEST_TIMEOUT = 30  # seconds per LSP call
 DAEMON_LOG_FILE = get_log_file()
 
 # ---------------------------------------------------------------------------
@@ -65,6 +62,7 @@ log = logging.getLogger("recon.daemon")
 # ---------------------------------------------------------------------------
 # LSP Instance Cache
 # ---------------------------------------------------------------------------
+
 
 class LspEntry:
     """Wraps a live SyncLanguageServer kept alive via ExitStack."""
@@ -88,9 +86,13 @@ class LspEntry:
 def _dispatch_lsp_cmd(lsp: SyncLanguageServer, cmd: str, **kwargs: Any) -> Any:
     """Route a command string to the appropriate SyncLanguageServer method."""
     if cmd == "definition":
-        return lsp.request_definition(kwargs["file_path"], kwargs["line"], kwargs["col"])
+        return lsp.request_definition(
+            kwargs["file_path"], kwargs["line"], kwargs["col"]
+        )
     elif cmd == "references":
-        return lsp.request_references(kwargs["file_path"], kwargs["line"], kwargs["col"])
+        return lsp.request_references(
+            kwargs["file_path"], kwargs["line"], kwargs["col"]
+        )
     elif cmd == "hover":
         return lsp.request_hover(kwargs["file_path"], kwargs["line"], kwargs["col"])
     elif cmd == "document_symbols":
@@ -100,7 +102,9 @@ def _dispatch_lsp_cmd(lsp: SyncLanguageServer, cmd: str, **kwargs: Any) -> Any:
         return lsp.request_workspace_symbol(kwargs["query"])
     elif cmd == "completions":
         return lsp.request_completions(
-            kwargs["file_path"], kwargs["line"], kwargs["col"],
+            kwargs["file_path"],
+            kwargs["line"],
+            kwargs["col"],
             kwargs.get("allow_incomplete", False),
         )
     else:
@@ -108,7 +112,7 @@ def _dispatch_lsp_cmd(lsp: SyncLanguageServer, cmd: str, **kwargs: Any) -> Any:
 
 
 # Global LSP cache: (lang, repo_path) -> LspEntry
-_lsp_cache: Dict[Tuple[str, str], LspEntry] = {}
+_lsp_cache: dict[tuple[str, str], LspEntry] = {}
 _cache_lock = threading.Lock()
 
 _last_request_time: float = time.monotonic()
@@ -126,7 +130,9 @@ def get_or_create_lsp(lang: str, repo_path: str) -> LspEntry:
         config = MultilspyConfig.from_dict({"code_language": lang})
         logger = MultilspyLogger()
         lsp = SyncLanguageServer.create(
-            config, logger, str(Path(repo_path).absolute()),
+            config,
+            logger,
+            str(Path(repo_path).absolute()),
             timeout=LSP_REQUEST_TIMEOUT,
         )
 
@@ -143,9 +149,11 @@ def get_memory_mb(pid: int) -> float:
     """Return the RSS memory usage of a process in MB."""
     try:
         import psutil
+
         return psutil.Process(pid).memory_info().rss / (1024 * 1024)
     except Exception:
         return 0.0
+
 
 def get_lsp_pid(entry: Any) -> int:
     """Safely extract the underlying language server subprocess PID."""
@@ -154,9 +162,11 @@ def get_lsp_pid(entry: Any) -> int:
     except Exception:
         return 0
 
+
 # ---------------------------------------------------------------------------
 # Connection handler
 # ---------------------------------------------------------------------------
+
 
 def handle_connection(conn: socket.socket) -> None:
     """Handle a single client connection: receive one request, send one response."""
@@ -180,6 +190,7 @@ def handle_connection(conn: socket.socket) -> None:
 
         if cmd == "status":
             import os
+
             mem_mb = get_memory_mb(os.getpid())
 
             with _cache_lock:
@@ -190,27 +201,38 @@ def handle_connection(conn: socket.socket) -> None:
                     if pid:
                         lsp_mem_mb = get_memory_mb(pid)
                         mem_mb += lsp_mem_mb
-                    
-                    cached.append({
-                        "lang": k[0], 
-                        "repo_path": k[1], 
-                        "memory_mb": round(lsp_mem_mb, 2)
-                    })
-            
-            send_frame(conn, {
-                "status": "ok", 
-                "result": {
-                    "cached_lsps": cached, 
-                    "total_memory_mb": round(mem_mb, 2)
-                }
-            })
+
+                    cached.append(
+                        {
+                            "lang": k[0],
+                            "repo_path": k[1],
+                            "memory_mb": round(lsp_mem_mb, 2),
+                        }
+                    )
+
+            send_frame(
+                conn,
+                {
+                    "status": "ok",
+                    "result": {
+                        "cached_lsps": cached,
+                        "total_memory_mb": round(mem_mb, 2),
+                    },
+                },
+            )
             return
 
         # --- LSP commands ---
         lang = payload.get("lang")
         repo_path = payload.get("repo_path")
         if not lang or not repo_path:
-            send_frame(conn, {"status": "error", "error": "Missing 'lang' or 'repo_path' in request."})
+            send_frame(
+                conn,
+                {
+                    "status": "error",
+                    "error": "Missing 'lang' or 'repo_path' in request.",
+                },
+            )
             return
 
         try:
@@ -220,7 +242,9 @@ def handle_connection(conn: socket.socket) -> None:
             send_frame(conn, {"status": "setup_error", "lang": lang, "error": str(e)})
             return
 
-        lsp_kwargs = {k: v for k, v in payload.items() if k not in ("cmd", "lang", "repo_path")}
+        lsp_kwargs = {
+            k: v for k, v in payload.items() if k not in ("cmd", "lang", "repo_path")
+        }
         result = entry.execute(cmd, **lsp_kwargs)
         send_frame(conn, {"status": "ok", "result": result})
 
@@ -241,6 +265,7 @@ def handle_connection(conn: socket.socket) -> None:
 # Idle watchdog
 # ---------------------------------------------------------------------------
 
+
 def _idle_watchdog() -> None:
     while not _shutdown_event.is_set():
         elapsed = time.monotonic() - _last_request_time
@@ -255,6 +280,7 @@ def _idle_watchdog() -> None:
 # ---------------------------------------------------------------------------
 # Cleanup
 # ---------------------------------------------------------------------------
+
 
 def _cleanup() -> None:
     log.info("Cleaning up daemon resources.")
@@ -291,6 +317,7 @@ def _handle_sigterm(signum: int, frame: Any) -> None:
 # ---------------------------------------------------------------------------
 # Main server loop
 # ---------------------------------------------------------------------------
+
 
 def run_daemon() -> None:
     """
@@ -333,13 +360,15 @@ def run_daemon() -> None:
 
     log.info("Daemon PID=%d started.", os.getpid())
 
-    watchdog = threading.Thread(target=_idle_watchdog, daemon=True, name="idle-watchdog")
+    watchdog = threading.Thread(
+        target=_idle_watchdog, daemon=True, name="idle-watchdog"
+    )
     watchdog.start()
 
     while not _shutdown_event.is_set():
         try:
             conn, _ = server.accept()
-        except socket.timeout:
+        except TimeoutError:
             continue
         except OSError:
             break

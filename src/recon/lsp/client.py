@@ -17,12 +17,12 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Platform-aware daemon directory & socket paths
 # ---------------------------------------------------------------------------
+
 
 def get_daemon_dir() -> Path:
     """User-scoped directory for daemon state files (socket, PID, log)."""
@@ -44,11 +44,14 @@ _USE_UNIX_SOCKET: bool = hasattr(socket, "AF_UNIX")
 def get_pid_file() -> Path:
     return get_daemon_dir() / "daemon.pid"
 
+
 def get_port_file() -> Path:
     return get_daemon_dir() / "daemon.port"
 
+
 def get_sock_file() -> Path:
     return get_daemon_dir() / "daemon.sock"
+
 
 def get_log_file() -> Path:
     return get_daemon_dir() / "daemon.log"
@@ -63,6 +66,7 @@ _HEADER = struct.Struct(">I")
 
 def _json_default(obj: Any) -> Any:
     import dataclasses
+
     if dataclasses.is_dataclass(obj):
         return dataclasses.asdict(obj)
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
@@ -98,6 +102,7 @@ def _recvall(sock: socket.socket, n: int) -> bytes:
 # Daemon liveness check
 # ---------------------------------------------------------------------------
 
+
 def is_daemon_alive() -> bool:
     """Check if the recon daemon process is running. Cleans stale PID files."""
     pid_file = get_pid_file()
@@ -105,6 +110,7 @@ def is_daemon_alive() -> bool:
         return False
     try:
         import psutil
+
         proc = psutil.Process(int(pid_file.read_text().strip()))
         return proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE
     except Exception:
@@ -205,7 +211,7 @@ def spawn_daemon() -> None:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         close_fds=True,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -213,8 +219,10 @@ def spawn_daemon() -> None:
 # Request dispatch
 # ---------------------------------------------------------------------------
 
+
 def _handle_setup_error(lang: str, error_msg: str) -> None:
     from recon.commands.setup_cmd import LANGUAGE_METADATA
+
     meta = LANGUAGE_METADATA.get(lang, {})
     guide = meta.get("manual_guide", f"Run `recon setup {lang} -i`")
     msg = (
@@ -240,7 +248,9 @@ def dispatch_request(payload: dict) -> Any:
                 if not is_daemon_alive():
                     spawn_daemon()
                 if not wait_for_daemon_socket():
-                    raise RuntimeError("Daemon failed to start within the timeout period.")
+                    raise RuntimeError(
+                        "Daemon failed to start within the timeout period."
+                    )
             else:
                 raise RuntimeError("Could not connect to daemon after spawning.")
 
@@ -271,7 +281,9 @@ def dispatch_lsp_request(
     """
     if no_daemon:
         return _direct_lsp_request(cmd, lang, repo_path, **kwargs)
-    return dispatch_request({"cmd": cmd, "lang": lang, "repo_path": repo_path, **kwargs})
+    return dispatch_request(
+        {"cmd": cmd, "lang": lang, "repo_path": repo_path, **kwargs}
+    )
 
 
 def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> Any:
@@ -291,9 +303,13 @@ def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> A
 
     try:
         if cmd == "definition":
-            return lsp.request_definition(kwargs["file_path"], kwargs["line"], kwargs["col"])
+            return lsp.request_definition(
+                kwargs["file_path"], kwargs["line"], kwargs["col"]
+            )
         elif cmd == "references":
-            return lsp.request_references(kwargs["file_path"], kwargs["line"], kwargs["col"])
+            return lsp.request_references(
+                kwargs["file_path"], kwargs["line"], kwargs["col"]
+            )
         elif cmd == "hover":
             return lsp.request_hover(kwargs["file_path"], kwargs["line"], kwargs["col"])
         elif cmd == "document_symbols":
@@ -303,7 +319,9 @@ def _direct_lsp_request(cmd: str, lang: str, repo_path: str, **kwargs: Any) -> A
             return lsp.request_workspace_symbol(kwargs["query"])
         elif cmd == "completions":
             return lsp.request_completions(
-                kwargs["file_path"], kwargs["line"], kwargs["col"],
+                kwargs["file_path"],
+                kwargs["line"],
+                kwargs["col"],
                 kwargs.get("allow_incomplete", False),
             )
         else:

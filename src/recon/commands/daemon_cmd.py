@@ -9,20 +9,17 @@ Commands:
 """
 
 import typer
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from recon.lsp.client import (
+    dispatch_request,
     is_daemon_alive,
     spawn_daemon,
     wait_for_daemon_socket,
-    dispatch_request,
-    get_daemon_dir,
-    get_log_file,
 )
-from recon.lsp.output import print_success, print_error, print_info, print_json
+from recon.lsp.output import print_error, print_info, print_success
 
 console = Console()
 
@@ -61,21 +58,27 @@ def stop():
 def status():
     """Show daemon status and currently cached LSP instances."""
     if not is_daemon_alive():
-        console.print(Panel(
-            "[yellow bold]Daemon is not running.[/yellow bold]\n\n"
-            "Start it with: [cyan]recon daemon start[/cyan]\n"
-            "Or it will auto-start on first query.",
-            title="Daemon Status",
-            border_style="yellow",
-        ))
+        console.print(
+            Panel(
+                "[yellow bold]Daemon is not running.[/yellow bold]\n\n"
+                "Start it with: [cyan]recon daemon start[/cyan]\n"
+                "Or it will auto-start on first query.",
+                title="Daemon Status",
+                border_style="yellow",
+            )
+        )
         return
 
     try:
         result = dispatch_request({"cmd": "status"})
         cached = result.get("cached_lsps", [])
         total_mem = result.get("total_memory_mb", 0.0)
-        
-        mem_str = f" [bold magenta]({total_mem} MB total memory)[/bold magenta]" if total_mem else ""
+
+        mem_str = (
+            f" [bold magenta]({total_mem} MB total memory)[/bold magenta]"
+            if total_mem
+            else ""
+        )
 
         if cached:
             table = Table(title="Cached LSP Instances", show_lines=False)
@@ -83,22 +86,30 @@ def status():
             table.add_column("Repository", style="green")
             table.add_column("Memory", style="magenta")
             for entry in cached:
-                mem = f"{entry.get('memory_mb', 0.0)} MB" if entry.get('memory_mb') else "Unknown"
+                mem = (
+                    f"{entry.get('memory_mb', 0.0)} MB"
+                    if entry.get("memory_mb")
+                    else "Unknown"
+                )
                 table.add_row(entry["lang"], entry["repo_path"], mem)
 
-            console.print(Panel(
-                f"[green bold]Daemon is running.[/green bold]{mem_str}",
-                title="Daemon Status",
-                border_style="green",
-            ))
+            console.print(
+                Panel(
+                    f"[green bold]Daemon is running.[/green bold]{mem_str}",
+                    title="Daemon Status",
+                    border_style="green",
+                )
+            )
             console.print(table)
         else:
-            console.print(Panel(
-                f"[green bold]Daemon is running.[/green bold]{mem_str}\n\n"
-                "[dim]No LSP instances cached yet. Run a query to warm up.[/dim]",
-                title="Daemon Status",
-                border_style="green",
-            ))
+            console.print(
+                Panel(
+                    f"[green bold]Daemon is running.[/green bold]{mem_str}\n\n"
+                    "[dim]No LSP instances cached yet. Run a query to warm up.[/dim]",
+                    title="Daemon Status",
+                    border_style="green",
+                )
+            )
     except Exception:
         print_error("Daemon is running but unreachable.")
 
@@ -115,6 +126,7 @@ def restart():
 
     # Wait a moment for cleanup
     import time
+
     time.sleep(0.5)
 
     spawn_daemon()

@@ -8,12 +8,12 @@ Supports three modes:
 """
 
 import json
-from typing import Any, List
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.syntax import Syntax
+from rich.table import Table
 
 from recon.utils import ReconJSONEncoder
 
@@ -34,23 +34,30 @@ def print_human(data: Any) -> None:
                 path = loc.get("relativePath") or loc.get("absolutePath")
                 if not path and "uri" in loc:
                     from recon.utils import uri_to_path
+
                     path = uri_to_path(loc["uri"])
                 path = path or "unknown"
-                
+
                 # Format line number as 1-indexed for display
                 line = loc.get("range", {}).get("start", {}).get("line")
                 line_display = str(line + 1) if isinstance(line, int) else "?"
                 name = item.get("name", "")
                 label = f"  [dim]— {name}[/dim]" if name else ""
-                console.print(f"  [cyan]{path}[/cyan]:[yellow]{line_display}[/yellow]{label}")
+                console.print(
+                    f"  [cyan]{path}[/cyan]:[yellow]{line_display}[/yellow]{label}"
+                )
 
                 context = item.get("context") or loc.get("context")
                 if context:
-                    console.print(Panel(
-                        Syntax(context, "python", theme="monokai", line_numbers=False),
-                        border_style="dim",
-                        padding=(0, 1),
-                    ))
+                    console.print(
+                        Panel(
+                            Syntax(
+                                context, "python", theme="monokai", line_numbers=False
+                            ),
+                            border_style="dim",
+                            padding=(0, 1),
+                        )
+                    )
             else:
                 print(json.dumps(item, cls=ReconJSONEncoder))
     elif isinstance(data, dict):

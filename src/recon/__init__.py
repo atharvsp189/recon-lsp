@@ -7,9 +7,9 @@ built on top of multilspy.
 
 __version__ = "0.1.0"
 
+import asyncio
 import os
 import sys
-import asyncio
 import threading
 from contextlib import contextmanager
 from pathlib import Path
@@ -42,16 +42,18 @@ try:
             timeout_val = getattr(self, "timeout", None) or 15
             future = asyncio.run_coroutine_threadsafe(ctx.__aenter__(), loop=self.loop)
             future.result(timeout=timeout_val)
-            
+
             # Immediately unlock completions event to prevent deadlock
             if hasattr(self.language_server, "completions_available"):
-                self.loop.call_soon_threadsafe(self.language_server.completions_available.set)
-                
+                self.loop.call_soon_threadsafe(
+                    self.language_server.completions_available.set
+                )
+
         except Exception as e:
             self.loop.call_soon_threadsafe(self.loop.stop)
             loop_thread.join()
             raise RuntimeError(f"LSP server failed to start or timed out: {e}")
-            
+
         try:
             yield self
         finally:
